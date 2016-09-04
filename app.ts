@@ -6,14 +6,18 @@ import {BalanceProxy} from './balance-proxy'
 import {SerialPortPublisher} from './serial-port-publisher'
 
 const debug = require('debug')('app')
+const nconf = require('nconf')
 const WS = require("ws")
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Wrapper for the SerialPort object, pushing messages out through RxJS.
+// Configuration
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+nconf.argv().env().defaults({
+    'port': 3333
+})
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -31,12 +35,13 @@ const serialPortSingleton = new SerialPortPublisher()
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const PORT = 3333
-const server = new WS.Server({port: PORT})
+let port = nconf.get('port')
+debug("Listening on port " + port)
+const server = new WS.Server({port: port})
 
 server.on("connection", (connection) => {
     const balanceServer = new BalanceProxy(connection, serialPortSingleton)
-    debug_socket("Connection received.")
+    debug("Connection received.")
 
     // Trap the balanceServer instance in the following closures:
 
@@ -49,12 +54,12 @@ server.on("connection", (connection) => {
     })
 
     connection.on("message", (message) => {
-        debug_socket("Message" + message)
+        debug("Message" + message)
         balanceServer.messageWebSocketHandler(message)
     })
 })
 
 server.on("error", (error) => {
-    debug_socket("Error event: ", error)
+    debug("Error event: ", error)
 })
 
