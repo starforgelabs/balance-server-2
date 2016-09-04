@@ -1,133 +1,21 @@
-// This is for the ES6 Map() class.
-/// <reference path="typings/typescript/lib.es6.d.ts"/>
 /// <reference path="typings/node/node.d.ts" />
 /// <reference path="node_modules/rxjs/Rx.d.ts" />
 
 const debug_app = require('debug')('app')
 const debug_balance = require('debug')('balance')
 const debug_socket = require('debug')('websocket')
+/// <reference path="./api.d.ts" />
+import {SerialPortPublisher} from './serial-port-publisher'
 
 const SerialPort = require("serialport")
 const WS = require("ws")
 const Rx = require('rxjs')
-
-// The list command from the server expects an array of data  with this format.
-interface SerialPortResponse {
-    device: string,
-    vendor: string,
-    vendorId: string,
-    productId: string,
-    connected: boolean,
-    prefer: boolean
-}
-
-// SerialPort.list returns an array of data with this format.
-interface SerialPortMetadata {
-    comName: string,
-    manufacturer: string,
-    serialNumber: string,
-    pnpId: string,
-    locationId: string,
-    vendorId: string,
-    productId: string
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Wrapper for the SerialPort object, pushing messages out through RxJS.
 //
 ////////////////////////////////////////////////////////////////////////////////
-
-class SerialPortPublisher {
-    public publisher: any
-    private port: any
-    private portOptions: any
-
-    constructor() {
-        this.port = null
-
-        // These are common defaults for an Ohaus balance
-        this.portOptions = {
-            baudRate: 9600,
-            dataBits: 8,
-            stopBits: 1,
-            parity: "none",
-            parser: SerialPort.parsers.readline('\n')
-        }
-
-        // This is a hot stream.
-        this.publisher = new Rx.Subject()
-    }
-
-    public close = () => {
-        if (this.isOpen)
-            this.port.close()
-
-        this.port = null
-    }
-
-    public get device(): string {
-        return this.port && this.port.path
-    }
-
-    public get isOpen(): boolean {
-        return this.port && this.port.isOpen()
-    }
-
-    public open = (device) => {
-        if (!device) {
-            debug_balance("open() didn't receive a device.")
-            this.publisher.next({
-                command: "connect",
-                error: "No device specified.",
-                noDevice: true
-            })
-            return
-        }
-
-        debug_balance("Doing a close() to be sure things are OK.")
-        this.close()
-
-        debug_balance("Opening serial port with options: ", this.portOptions)
-        this.port = new SerialPort(device, this.portOptions)
-        this.port.on('close', this.portCloseHandler)
-        this.port.on('data', this.portDataHandler)
-        this.port.on('disconnect', this.close)
-        this.port.on('error', this.portErrorHandler)
-        this.port.on('open', this.portOpenHandler)
-    }
-
-    private portCloseHandler = () => {
-        debug_balance("Serial port close event.")
-        this.status()
-    }
-
-    private portDataHandler = (data) => {
-        debug_balance("Serial port data event:", data)
-        this.publisher.next({
-            data: data
-        })
-    }
-
-    private portErrorHandler = (error) => {
-        debug_balance("Serial port error: ", error)
-        this.publisher.next({
-            error: error
-        })
-    }
-
-    private portOpenHandler = () => {
-        debug_balance("Serial port open event.")
-        this.status()
-    }
-
-    public status = () => {
-        this.publisher.next({
-            connected: this.isOpen,
-            device: this.device
-        })
-    }
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
