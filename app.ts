@@ -1,6 +1,3 @@
-/// <reference path="typings/node/node.d.ts" />
-/// <reference path="node_modules/rxjs/Rx.d.ts" />
-
 /// <reference path="./api.d.ts" />
 import {BalanceProxy} from './balance-proxy'
 import {SerialPortPublisher} from './serial-port-publisher'

@@ -1,5 +1,3 @@
-/// <reference path="typings/node/node.d.ts" />
-/// <reference path="node_modules/rxjs/Rx.d.ts" />
 "use strict";
 /// <reference path="./api.d.ts" />
 var balance_proxy_1 = require('./balance-proxy');
