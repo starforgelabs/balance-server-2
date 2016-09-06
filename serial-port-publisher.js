@@ -47,6 +47,70 @@ class SerialPortPublisher {
             this.port.on('error', this.portErrorHandler);
             this.port.on('open', this.portOpenHandler);
         };
+        this.sendData = (data) => {
+            this.publisher.next({
+                data: data
+            });
+        };
+        this.sendError = (error, message) => {
+            this.publisher.next({
+                error: !error ? null : error.toString(),
+                message: message || null
+            });
+        };
+        this.sendStatus = () => {
+            this.publisher.next({
+                connected: this.isOpen,
+                device: this.device
+            });
+        };
+        ////////////////////////////////////////
+        //
+        // Handlers
+        //
+        ////////////////////////////////////////
+        this.portCloseHandler = () => {
+            debug("Serial port close event.");
+            this.sendStatus();
+        };
+        this.portDataHandler = (data) => {
+            debug("Serial port data event:", data);
+            this.sendData(data);
+        };
+        this.portErrorHandler = (error) => {
+            debug("Serial port error: ", error);
+            this.sendError(error, "Serial port error.");
+        };
+        this.portOpenHandler = () => {
+            debug("Serial port open event.");
+            this.sendStatus();
+        };
+        ////////////////////////////////////////
+        //
+        // Private
+        //
+        ////////////////////////////////////////
+        this.isDeviceConnected = (device) => {
+            return device === this.device && this.isOpen;
+        };
+        this.isDevicePreferred = (vendorId) => {
+            return this.ftdiRegex instanceof RegExp && this.ftdiRegex.test(vendorId);
+        };
+        this.listToResponse = (port) => {
+            if (!port.vendorId && port.pnpId) {
+                const pnpRegex = /VID_0403/;
+                if (pnpRegex.test(port.pnpId))
+                    port.vendorId = "0x0403";
+            }
+            return {
+                device: port.comName,
+                vendor: port.manufacturer || null,
+                vendorId: port.vendorId || null,
+                productId: port.productId || null,
+                connected: this.isDeviceConnected(port.comName),
+                prefer: this.isDevicePreferred(port.vendorId)
+            };
+        };
         this.ftdiRegex = /0x0403/; // FTDI manufacturer ID
         this.port = null;
         // These are common defaults for an Ohaus balance
@@ -65,70 +129,6 @@ class SerialPortPublisher {
     }
     get isOpen() {
         return this.port && this.port.isOpen();
-    }
-    sendData(data) {
-        this.publisher.next({
-            data: data
-        });
-    }
-    sendError(error, message) {
-        this.publisher.next({
-            error: !error ? null : error.toString(),
-            message: message || null
-        });
-    }
-    sendStatus() {
-        this.publisher.next({
-            connected: this.isOpen,
-            device: this.device
-        });
-    }
-    ////////////////////////////////////////
-    //
-    // Handlers
-    //
-    ////////////////////////////////////////
-    portCloseHandler() {
-        debug("Serial port close event.");
-        this.sendStatus();
-    }
-    portDataHandler(data) {
-        debug("Serial port data event:", data);
-        this.sendData(data);
-    }
-    portErrorHandler(error) {
-        debug("Serial port error: ", error);
-        this.sendError(error, "Serial port error.");
-    }
-    portOpenHandler() {
-        debug("Serial port open event.");
-        this.sendStatus();
-    }
-    ////////////////////////////////////////
-    //
-    // Private
-    //
-    ////////////////////////////////////////
-    isDeviceConnected(device) {
-        return device === this.device && this.isOpen;
-    }
-    isDevicePreferred(vendorId) {
-        return this.ftdiRegex instanceof RegExp && this.ftdiRegex.test(vendorId);
-    }
-    listToResponse(port) {
-        if (!port.vendorId && port.pnpId) {
-            const pnpRegex = /VID_0403/;
-            if (pnpRegex.test(port.pnpId))
-                port.vendorId = "0x0403";
-        }
-        return {
-            device: port.comName,
-            vendor: port.manufacturer || null,
-            vendorId: port.vendorId || null,
-            productId: port.productId || null,
-            connected: this.isDeviceConnected(port.comName),
-            prefer: this.isDevicePreferred(port.vendorId)
-        };
     }
 }
 exports.SerialPortPublisher = SerialPortPublisher;

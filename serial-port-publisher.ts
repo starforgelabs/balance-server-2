@@ -98,20 +98,20 @@ export class SerialPortPublisher {
         this.port.on('open', this.portOpenHandler)
     }
 
-    public sendData(data: string) {
+    public sendData = (data: string) => {
         this.publisher.next({
             data: data
         } as SerialData)
     }
 
-    public sendError(error: any, message?: string) {
+    public sendError = (error: any, message?: string) => {
         this.publisher.next({
             error: !error ? null : error.toString(),
             message: message || null
         } as SerialError)
     }
 
-    public sendStatus() {
+    public sendStatus = () => {
         this.publisher.next({
             connected: this.isOpen,
             device: this.device
@@ -124,22 +124,22 @@ export class SerialPortPublisher {
     //
     ////////////////////////////////////////
 
-    private portCloseHandler() {
+    private portCloseHandler = () => {
         debug("Serial port close event.")
         this.sendStatus()
     }
 
-    private portDataHandler(data: string) {
+    private portDataHandler = (data: string) => {
         debug("Serial port data event:", data)
         this.sendData(data)
     }
 
-    private portErrorHandler(error) {
+    private portErrorHandler = (error) => {
         debug("Serial port error: ", error)
         this.sendError(error, "Serial port error.")
     }
 
-    private portOpenHandler() {
+    private portOpenHandler = () => {
         debug("Serial port open event.")
         this.sendStatus()
     }
@@ -150,15 +150,15 @@ export class SerialPortPublisher {
     //
     ////////////////////////////////////////
 
-    private isDeviceConnected(device: string): boolean {
+    private isDeviceConnected = (device: string): boolean => {
         return device === this.device && this.isOpen
     }
 
-    private isDevicePreferred(vendorId: string): boolean {
+    private isDevicePreferred = (vendorId: string): boolean => {
         return this.ftdiRegex instanceof RegExp && this.ftdiRegex.test(vendorId)
     }
 
-    private listToResponse(port: SerialPortMetadata): SerialPortResponse {
+    private listToResponse = (port: SerialPortMetadata): SerialPortResponse => {
         if (!port.vendorId && port.pnpId) {
             const pnpRegex = /VID_0403/
             if (pnpRegex.test(port.pnpId))

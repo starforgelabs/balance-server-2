@@ -14,6 +14,34 @@ class BalanceProxy {
     constructor(connection, serial) {
         this.connection = connection;
         this.serial = serial;
+        ////////////////////////////////////////
+        //
+        // Balance methods
+        //
+        ////////////////////////////////////////
+        this.balanceNext = (data) => {
+            this.send(data);
+        };
+        this.subscribe = () => {
+            if (!this.subscription)
+                this.subscription = this.serial.publisher.subscribe(this.balanceNext);
+        };
+        this.unsubscribe = () => {
+            if (this.subscription)
+                this.subscription.unsubscribe();
+        };
+        ////////////////////////////////////////
+        //
+        // WebSocket methods
+        //
+        ////////////////////////////////////////
+        this.closeWebSocketHandler = () => {
+            this.unsubscribe();
+            debug("WebSocket connection closed.");
+        };
+        this.errorWebSocketHandler = (error) => {
+            debug("WebSocket connection error: ", error);
+        };
         this.messageWebSocketHandler = (message) => {
             let receivedJson;
             try {
@@ -46,34 +74,6 @@ class BalanceProxy {
         };
         this.subscription = null;
         this.subscribe();
-    }
-    ////////////////////////////////////////
-    //
-    // Balance methods
-    //
-    ////////////////////////////////////////
-    balanceNext(data) {
-        this.send(data);
-    }
-    subscribe() {
-        if (!this.subscription)
-            this.subscription = this.serial.publisher.subscribe(this.balanceNext);
-    }
-    unsubscribe() {
-        if (this.subscription)
-            this.subscription.unsubscribe();
-    }
-    ////////////////////////////////////////
-    //
-    // WebSocket methods
-    //
-    ////////////////////////////////////////
-    closeWebSocketHandler() {
-        this.unsubscribe();
-        debug("WebSocket connection closed.");
-    }
-    errorWebSocketHandler(error) {
-        debug("WebSocket connection error: ", error);
     }
 }
 exports.BalanceProxy = BalanceProxy;
