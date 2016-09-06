@@ -12,9 +12,7 @@ const WS = require("ws")
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-nconf.argv().env().defaults({
-    'port': 3333
-})
+nconf.argv().env().defaults({'port': 3333})
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -42,13 +40,9 @@ server.on("connection", (connection) => {
 
     // Trap the balanceServer instance in the following closures:
 
-    connection.on("close", () => {
-        balanceServer.closeWebSocketHandler()
-    })
+    connection.on("close", () => balanceServer.closeWebSocketHandler())
 
-    connection.on("error", (error) => {
-        balanceServer.errorWebSocketHandler(error)
-    })
+    connection.on("error", (error) => balanceServer.errorWebSocketHandler(error))
 
     connection.on("message", (message) => {
         debug("Message" + message)
@@ -56,7 +50,5 @@ server.on("connection", (connection) => {
     })
 })
 
-server.on("error", (error) => {
-    debug("Error event: ", error)
-})
+server.on("error", (error) => debug("Error event: ", error))
 

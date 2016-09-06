@@ -1,5 +1,5 @@
 "use strict";
-var debug = require('debug')('proxy');
+const debug = require('debug')('proxy');
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Glue for each WebSocket connection.
@@ -10,40 +10,12 @@ var debug = require('debug')('proxy');
 // Each connection will have its own BalanceProxy instance.
 //
 ////////////////////////////////////////////////////////////////////////////////
-var BalanceProxy = (function () {
-    function BalanceProxy(connection, serial) {
-        var _this = this;
+class BalanceProxy {
+    constructor(connection, serial) {
         this.connection = connection;
         this.serial = serial;
-        ////////////////////////////////////////
-        //
-        // Balance methods
-        //
-        ////////////////////////////////////////
-        this.balanceNext = function (data) {
-            _this.send(data);
-        };
-        this.subscribe = function () {
-            if (!_this.subscription)
-                _this.subscription = _this.serial.publisher.subscribe(_this.balanceNext);
-        };
-        this.unsubscribe = function () {
-            if (_this.subscription)
-                _this.subscription.unsubscribe();
-        };
-        ////////////////////////////////////////
-        //
-        // WebSocket methods
-        //
-        ////////////////////////////////////////
-        this.closeWebSocketHandler = function () {
-            debug("WebSocket connection closed.");
-        };
-        this.errorWebSocketHandler = function (error) {
-            debug("WebSocket connection error: ", error);
-        };
-        this.messageWebSocketHandler = function (message) {
-            var receivedJson;
+        this.messageWebSocketHandler = (message) => {
+            let receivedJson;
             try {
                 receivedJson = JSON.parse(message);
             }
@@ -56,17 +28,17 @@ var BalanceProxy = (function () {
                 return;
             }
             if (receivedJson.command === "list")
-                _this.serial.list();
+                this.serial.list();
             else if (receivedJson.command === "connect")
-                _this.serial.open(receivedJson.device);
+                this.serial.open(receivedJson.device);
             else if (receivedJson.command === "disconnect")
-                _this.serial.close();
+                this.serial.close();
             else if (receivedJson.command === "status")
-                _this.serial.sendStatus();
+                this.serial.sendStatus();
         };
-        this.send = function (json) {
+        this.send = (json) => {
             try {
-                _this.connection.send(JSON.stringify(json));
+                this.connection.send(JSON.stringify(json));
             }
             catch (e) {
                 debug("Failed to send data to client: ", e.message);
@@ -75,7 +47,34 @@ var BalanceProxy = (function () {
         this.subscription = null;
         this.subscribe();
     }
-    return BalanceProxy;
-}());
+    ////////////////////////////////////////
+    //
+    // Balance methods
+    //
+    ////////////////////////////////////////
+    balanceNext(data) {
+        this.send(data);
+    }
+    subscribe() {
+        if (!this.subscription)
+            this.subscription = this.serial.publisher.subscribe(this.balanceNext);
+    }
+    unsubscribe() {
+        if (this.subscription)
+            this.subscription.unsubscribe();
+    }
+    ////////////////////////////////////////
+    //
+    // WebSocket methods
+    //
+    ////////////////////////////////////////
+    closeWebSocketHandler() {
+        this.unsubscribe();
+        debug("WebSocket connection closed.");
+    }
+    errorWebSocketHandler(error) {
+        debug("WebSocket connection error: ", error);
+    }
+}
 exports.BalanceProxy = BalanceProxy;
 //# sourceMappingURL=balance-proxy.js.map

@@ -28,16 +28,16 @@ export class BalanceProxy {
     ////////////////////////////////////////
 
 
-    private balanceNext = (data) => {
+    private balanceNext(data) {
         this.send(data)
     }
 
-    private subscribe = () => {
+    private subscribe() {
         if (!this.subscription)
             this.subscription = this.serial.publisher.subscribe(this.balanceNext)
     }
 
-    private unsubscribe = () => {
+    private unsubscribe() {
         if (this.subscription)
             this.subscription.unsubscribe()
     }
@@ -48,11 +48,12 @@ export class BalanceProxy {
     //
     ////////////////////////////////////////
 
-    public closeWebSocketHandler = () => {
+    public closeWebSocketHandler() {
+        this.unsubscribe()
         debug("WebSocket connection closed.")
     }
 
-    public errorWebSocketHandler = (error) => {
+    public errorWebSocketHandler(error) {
         debug("WebSocket connection error: ", error)
     }
 

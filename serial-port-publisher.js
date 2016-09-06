@@ -1,90 +1,51 @@
 "use strict";
 /// <reference path="./api.d.ts" />
-var rxjs_1 = require("rxjs");
-var debug = require('debug')('balance');
-var SerialPort = require("serialport");
+const rxjs_1 = require("rxjs");
+const debug = require('debug')('balance');
+const SerialPort = require("serialport");
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Wrapper for the SerialPort object, pushing messages out through RxJS.
 //
 ////////////////////////////////////////////////////////////////////////////////
-var SerialPortPublisher = (function () {
-    function SerialPortPublisher() {
-        var _this = this;
-        this.close = function () {
-            if (_this.isOpen)
-                _this.port.close();
-            _this.port = null;
+class SerialPortPublisher {
+    constructor() {
+        this.close = () => {
+            if (this.isOpen)
+                this.port.close();
+            this.port = null;
         };
-        this.list = function () {
-            SerialPort.list(function (error, data) {
+        this.list = () => {
+            SerialPort.list((error, data) => {
                 if (error) {
                     debug("Received error from SerialPort.list: ", error);
-                    _this.sendError(error, "Received error from SerialPort.list: ");
+                    this.sendError(error, "Received error from SerialPort.list: ");
                     return;
                 }
                 debug("Received data from SerialPort.list: ", data);
                 if (!data)
                     data = [];
-                var result = data.map(function (port) { return _this.listToResponse(port); });
+                let result = data.map(port => this.listToResponse(port));
                 debug("result: ", result);
-                _this.publisher.next({
+                this.publisher.next({
                     list: result
                 });
             });
         };
-        this.open = function (device) {
+        this.open = (device) => {
             if (!device) {
-                _this.sendError(null, "open() didn't receive a device.");
+                this.sendError(null, "open() didn't receive a device.");
                 return;
             }
             debug("Doing a close() to be sure things are OK.");
-            _this.close();
-            debug("Opening serial port with options: ", _this.portOptions);
-            _this.port = new SerialPort(device, _this.portOptions);
-            _this.port.on('close', _this.portCloseHandler);
-            _this.port.on('data', _this.portDataHandler);
-            _this.port.on('disconnect', _this.close);
-            _this.port.on('error', _this.portErrorHandler);
-            _this.port.on('open', _this.portOpenHandler);
-        };
-        this.sendData = function (data) {
-            _this.publisher.next({
-                data: data
-            });
-        };
-        this.sendError = function (error, message) {
-            _this.publisher.next({
-                error: error.toString(),
-                message: message || null
-            });
-        };
-        this.sendStatus = function () {
-            _this.publisher.next({
-                connected: _this.isOpen,
-                device: _this.device
-            });
-        };
-        ////////////////////////////////////////
-        //
-        // Handlers
-        //
-        ////////////////////////////////////////
-        this.portCloseHandler = function () {
-            debug("Serial port close event.");
-            _this.sendStatus();
-        };
-        this.portDataHandler = function (data) {
-            debug("Serial port data event:", data);
-            _this.sendData(data);
-        };
-        this.portErrorHandler = function (error) {
-            debug("Serial port error: ", error);
-            _this.sendError(error, "Serial port error.");
-        };
-        this.portOpenHandler = function () {
-            debug("Serial port open event.");
-            _this.sendStatus();
+            this.close();
+            debug("Opening serial port with options: ", this.portOptions);
+            this.port = new SerialPort(device, this.portOptions);
+            this.port.on('close', this.portCloseHandler);
+            this.port.on('data', this.portDataHandler);
+            this.port.on('disconnect', this.close);
+            this.port.on('error', this.portErrorHandler);
+            this.port.on('open', this.portOpenHandler);
         };
         this.ftdiRegex = /0x0403/; // FTDI manufacturer ID
         this.port = null;
@@ -99,34 +60,64 @@ var SerialPortPublisher = (function () {
         // This is a hot stream.
         this.publisher = new rxjs_1.Subject();
     }
-    Object.defineProperty(SerialPortPublisher.prototype, "device", {
-        get: function () {
-            return this.port && this.port.path;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SerialPortPublisher.prototype, "isOpen", {
-        get: function () {
-            return this.port && this.port.isOpen();
-        },
-        enumerable: true,
-        configurable: true
-    });
+    get device() {
+        return this.port && this.port.path;
+    }
+    get isOpen() {
+        return this.port && this.port.isOpen();
+    }
+    sendData(data) {
+        this.publisher.next({
+            data: data
+        });
+    }
+    sendError(error, message) {
+        this.publisher.next({
+            error: !error ? null : error.toString(),
+            message: message || null
+        });
+    }
+    sendStatus() {
+        this.publisher.next({
+            connected: this.isOpen,
+            device: this.device
+        });
+    }
+    ////////////////////////////////////////
+    //
+    // Handlers
+    //
+    ////////////////////////////////////////
+    portCloseHandler() {
+        debug("Serial port close event.");
+        this.sendStatus();
+    }
+    portDataHandler(data) {
+        debug("Serial port data event:", data);
+        this.sendData(data);
+    }
+    portErrorHandler(error) {
+        debug("Serial port error: ", error);
+        this.sendError(error, "Serial port error.");
+    }
+    portOpenHandler() {
+        debug("Serial port open event.");
+        this.sendStatus();
+    }
     ////////////////////////////////////////
     //
     // Private
     //
     ////////////////////////////////////////
-    SerialPortPublisher.prototype.isDeviceConnected = function (device) {
+    isDeviceConnected(device) {
         return device === this.device && this.isOpen;
-    };
-    SerialPortPublisher.prototype.isDevicePreferred = function (vendorId) {
+    }
+    isDevicePreferred(vendorId) {
         return this.ftdiRegex instanceof RegExp && this.ftdiRegex.test(vendorId);
-    };
-    SerialPortPublisher.prototype.listToResponse = function (port) {
+    }
+    listToResponse(port) {
         if (!port.vendorId && port.pnpId) {
-            var pnpRegex = /VID_0403/;
+            const pnpRegex = /VID_0403/;
             if (pnpRegex.test(port.pnpId))
                 port.vendorId = "0x0403";
         }
@@ -138,8 +129,7 @@ var SerialPortPublisher = (function () {
             connected: this.isDeviceConnected(port.comName),
             prefer: this.isDevicePreferred(port.vendorId)
         };
-    };
-    return SerialPortPublisher;
-}());
+    }
+}
 exports.SerialPortPublisher = SerialPortPublisher;
 //# sourceMappingURL=serial-port-publisher.js.map

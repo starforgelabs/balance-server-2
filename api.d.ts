@@ -9,11 +9,6 @@ interface SerialError {
     message: string
 }
 
-// The client expects port status messages to look like this.
-interface SerialList {
-    list: any[]
-}
-
 // The client expects the list command to provide this interface.
 interface SerialPortResponse {
     device: string,
@@ -22,6 +17,11 @@ interface SerialPortResponse {
     productId: string,
     connected: boolean,
     prefer: boolean
+}
+
+// The client expects port status messages to look like this.
+interface SerialList {
+    list: Array<SerialPortResponse>
 }
 
 // The client expects port status messages to look like this.
