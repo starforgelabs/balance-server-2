@@ -1,5 +1,8 @@
 {
-  "name": "balance-server",
+  "name": "balance-server-2",
+  "description": "A simple WebSocket server to provide remote access to an Ohaus balance connected to a machine.",
+  "repository": "https://github.com/starforgelabs/balance-server-2.git",
+  "license": "MIT",
   "version": "2.0.0",
   "dependencies": {
     "debug": "^2.2.0",
