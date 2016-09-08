@@ -128,7 +128,8 @@ class SerialPortPublisher {
         return this.port && this.port.path;
     }
     get isOpen() {
-        return this.port && this.port.isOpen();
+        // Use !! to force a boolean result.
+        return !!(this.port && this.port.isOpen());
     }
 }
 exports.SerialPortPublisher = SerialPortPublisher;

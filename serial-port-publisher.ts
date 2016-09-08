@@ -56,7 +56,8 @@ export class SerialPortPublisher {
     }
 
     public get isOpen(): boolean {
-        return this.port && this.port.isOpen()
+        // Use !! to force a boolean result.
+        return !!(this.port && this.port.isOpen())
     }
 
     public list = () => {
