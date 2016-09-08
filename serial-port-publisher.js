@@ -26,7 +26,7 @@ class SerialPortPublisher {
                 if (!data)
                     data = [];
                 let result = data.map(port => this.listToResponse(port));
-                debug("result: ", result);
+                debug("Transformed serial  port data: ", result);
                 this.publisher.next({
                     list: result
                 });
