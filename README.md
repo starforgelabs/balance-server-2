@@ -82,7 +82,6 @@ cd balance-server-2
 npm install
 ```
 
-
 ## Options
 
 
@@ -95,14 +94,14 @@ listen on. Defaults to port 3333.
 A process monitor such as `pm2` or `forever` is suggested. 
 
 ``` bash
-npm install -g pm2
+sudo npm install -g pm2
 pm2 start app.js
 ```
 
 or
 
 ``` bash
-npm install -g forever
+sudo npm install -g forever
 forever start app.js
 ```
 
