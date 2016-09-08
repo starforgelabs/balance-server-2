@@ -74,10 +74,12 @@ export class BalanceProxy {
         if (receivedJson.command === "list")
             this.serial.list()
 
-        else if (receivedJson.command === "connect")
+        else if (receivedJson.command === "connect" ||
+            receivedJson.command === "open")
             this.serial.open(receivedJson.device)
 
-        else if (receivedJson.command === "disconnect")
+        else if (receivedJson.command === "disconnect" ||
+            receivedJson.command === "close")
             this.serial.close()
 
         else if (receivedJson.command === "status")
