@@ -65,6 +65,10 @@ class BalanceProxy {
                 this.serial.close();
             else if (receivedJson.command === "status")
                 this.serial.sendStatus();
+            else
+                this.send({
+                    error: `BalanceProxy doesn't recognize the command "${receivedJson.command}"`
+                });
         };
         this.send = (json) => {
             try {

@@ -84,6 +84,11 @@ export class BalanceProxy {
 
         else if (receivedJson.command === "status")
             this.serial.sendStatus()
+
+        else
+            this.send({
+                error: `BalanceProxy doesn't recognize the command "${receivedJson.command}"`
+            })
     }
 
     public send = (json: any) => {
