@@ -114,7 +114,7 @@ variable. There are three sections that can be enabled independently:
 
 * *app* - The main application, which includes the WebSocket server. 
 * *proxy* - The glue between a WebSocket connection and the serial port.
-* *balanace* - A wrapper for the serial port that pushes information
+* *balance* - A wrapper for the serial port that pushes information
    with RxJS. 
    
 To enable everything,
