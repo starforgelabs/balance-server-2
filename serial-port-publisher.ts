@@ -21,11 +21,16 @@ interface SerialPortMetadata {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+const DEBOUNCE_DELAY = 800 // mS
+
 export class SerialPortPublisher {
     private ftdiRegex: RegExp
     private port: any
     private portOptions: any
     public publisher: Subject<any>
+
+    // Used to pre-process data events before sending them to the WebSocket client.
+    private dataStream: Subject<any>
 
     constructor() {
         this.ftdiRegex = /0x0403/ // FTDI manufacturer ID
@@ -42,6 +47,7 @@ export class SerialPortPublisher {
 
         // This is a hot stream.
         this.publisher = new Subject()
+        this.initializeDataDebouncer()
     }
 
     public close = () => {
@@ -53,6 +59,15 @@ export class SerialPortPublisher {
 
     public get device(): string {
         return this.port && this.port.path
+    }
+
+    private initializeDataDebouncer = () => {
+        // This is a hot stream.
+        this.dataStream = new Subject()
+
+        // This debounces the data stream.
+        this.dataStream.debounceTime(DEBOUNCE_DELAY)
+            .subscribe(this.sendData)
     }
 
     public get isOpen(): boolean {
@@ -100,6 +115,7 @@ export class SerialPortPublisher {
     }
 
     public sendData = (data: string) => {
+        debug("sendData: ", data)
         this.publisher.next({
             data: data
         } as SerialData)
@@ -132,7 +148,8 @@ export class SerialPortPublisher {
 
     private portDataHandler = (data: string) => {
         debug("Serial port data event:", data)
-        this.sendData(data)
+        // Inject the data into the debouncer
+        this.dataStream.next(data)
     }
 
     private portErrorHandler = (error) => {
