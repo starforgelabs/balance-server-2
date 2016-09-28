@@ -8,12 +8,20 @@ const SerialPort = require("serialport");
 // Wrapper for the SerialPort object, pushing messages out through RxJS.
 //
 ////////////////////////////////////////////////////////////////////////////////
+const DEBOUNCE_DELAY = 800; // mS
 class SerialPortPublisher {
     constructor() {
         this.close = () => {
             if (this.isOpen)
                 this.port.close();
             this.port = null;
+        };
+        this.initializeDataDebouncer = () => {
+            // This is a hot stream.
+            this.dataStream = new rxjs_1.Subject();
+            // This debounces the data stream.
+            this.dataStream.debounceTime(DEBOUNCE_DELAY)
+                .subscribe(this.sendData);
         };
         this.list = () => {
             SerialPort.list((error, data) => {
@@ -48,6 +56,7 @@ class SerialPortPublisher {
             this.port.on('open', this.portOpenHandler);
         };
         this.sendData = (data) => {
+            debug("sendData: ", data);
             this.publisher.next({
                 data: data
             });
@@ -75,7 +84,8 @@ class SerialPortPublisher {
         };
         this.portDataHandler = (data) => {
             debug("Serial port data event:", data);
-            this.sendData(data);
+            // Inject the data into the debouncer
+            this.dataStream.next(data);
         };
         this.portErrorHandler = (error) => {
             debug("Serial port error: ", error);
@@ -123,6 +133,7 @@ class SerialPortPublisher {
         };
         // This is a hot stream.
         this.publisher = new rxjs_1.Subject();
+        this.initializeDataDebouncer();
     }
     get device() {
         return this.port && this.port.path;
