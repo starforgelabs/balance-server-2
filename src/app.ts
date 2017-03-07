@@ -1,10 +1,9 @@
-/// <reference path="./api.d.ts" />
-import {BalanceProxy} from './balance-proxy'
-import {SerialPortPublisher} from './serial-port-publisher'
+import { BalanceProxy } from './balance-proxy'
+import { SerialPortPublisher } from './serial-port-publisher'
 
 const debug = require('debug')('app')
 const nconf = require('nconf')
-const WS = require("ws")
+const WS = require('ws')
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -12,7 +11,7 @@ const WS = require("ws")
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-nconf.argv().env().defaults({'port': 3333})
+nconf.argv().env().defaults({ 'port': 3333 })
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -31,24 +30,23 @@ const serialPortSingleton = new SerialPortPublisher()
 ////////////////////////////////////////////////////////////////////////////////
 
 let port = nconf.get('port')
-debug("Listening on port " + port)
-const server = new WS.Server({port: port})
+debug(`Listening on port ${port}.`)
+const server = new WS.Server({ port: port })
 
-server.on("connection", (connection) => {
+server.on('connection', (connection) => {
     const balanceServer = new BalanceProxy(connection, serialPortSingleton)
-    debug("Connection received.")
+    debug('Connection received.')
 
     // Trap the balanceServer instance in the following closures:
 
-    connection.on("close", () => balanceServer.closeWebSocketHandler())
+    connection.on('close', () => balanceServer.closeWebSocketHandler())
 
-    connection.on("error", (error) => balanceServer.errorWebSocketHandler(error))
+    connection.on('error', (error) => balanceServer.errorWebSocketHandler(error))
 
-    connection.on("message", (message) => {
-        debug("Message" + message)
+    connection.on('message', (message) => {
+        debug('Message' + message)
         balanceServer.messageWebSocketHandler(message)
     })
 })
 
-server.on("error", (error) => debug("Error event: ", error))
-
+server.on('error', (error) => debug('Error event: ', error))
