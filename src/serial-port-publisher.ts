@@ -1,8 +1,6 @@
 import {Subject} from 'rxjs'
 
 import {OhausBalanceOptions} from './ohaus-balance-options'
-
-const debug = require('debug')('balance')
 import {SerialData} from './serial/serial-data'
 import {SerialError} from './serial/serial-error'
 import {SerialList} from './serial/serial-list'
@@ -10,6 +8,8 @@ import {ISerialPortMetadata} from './serial/serialport-metadata'
 import {ISerialPortOptions} from './serial/serial-port-options'
 import {ISerialPortResponse, SerialPortResponse} from './serial/serial-port-response'
 import {SerialStatus} from './serial/serial-status'
+
+const debug = require('debug')('app:balance')
 const SerialPort = require('serialport')
 
 ////////////////////////////////////////////////////////////////////////////////

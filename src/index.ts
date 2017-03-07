@@ -1,7 +1,7 @@
 import { BalanceProxy } from './balance-proxy'
 import { SerialPortPublisher } from './serial-port-publisher'
 
-const debug = require('debug')('app')
+const debug = require('debug')('app:main')
 const nconf = require('nconf')
 const WS = require('ws')
 

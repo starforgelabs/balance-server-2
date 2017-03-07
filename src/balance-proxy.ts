@@ -1,6 +1,7 @@
+import { SerialError } from './serial/serial-error'
 import { SerialPortPublisher } from './serial-port-publisher'
 
-const debug = require('debug')('proxy')
+const debug = require('debug')('app:proxy')
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -86,9 +87,9 @@ export class BalanceProxy {
             this.serial.sendStatus()
 
         else
-            this.send({
-                error: `BalanceProxy doesn't recognize the command "${receivedJson.command}"`
-            })
+            this.send(new SerialError(
+                `BalanceProxy doesn't recognize the command "${receivedJson.command}".`
+            ))
     }
 
     public send = (json: any) => {
