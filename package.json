@@ -1,17 +1,30 @@
 {
-  "name": "balance-server-2",
-  "description": "A simple WebSocket server to provide remote access to an Ohaus balance connected to a machine.",
-  "repository": "https://github.com/starforgelabs/balance-server-2.git",
-  "license": "MIT",
-  "version": "2.0.1",
-  "dependencies": {
-    "@types/debug": "0.0.29",
-    "@types/nconf": "0.0.33",
-    "@types/node": "^7.0.5",
-    "debug": "^2.6.1",
-    "nconf": "^0.8.4",
-    "rxjs": "^5.2.0",
-    "serialport": "^4.0.7",
-    "ws": "^1.1.2"
-  }
+    "author": {
+        "name": "James Knowles",
+        "email": "james.reuben.knowles.@gmail.com"
+    },
+    "bin": "dist/index.js",
+    "bugs": "http://starforgelabs.atlassian.net/",
+    "dependencies": {
+        "@types/debug": "0.0.29",
+        "@types/nconf": "0.0.33",
+        "@types/node": "^7.0.5",
+        "debug": "^2.6.1",
+        "nconf": "^0.8.4",
+        "rxjs": "^5.2.0",
+        "serialport": "^4.0.7",
+        "ws": "^2.2.0"
+    },
+    "description": "A WebSocket server to provide remote access to an Ohaus balance connected to a machine.",
+    "license": "UNLICENSED",
+    "main": "src/index.ts",
+    "name": "balance-server-2",
+    "private": true,
+    "repository": "https://github.com/starforgelabs/balance-server-2.git",
+    "scripts": {
+      "install": "tsc",
+      "start": "node dist/index.js"
+    },
+    "typings": "dist/index",
+    "version": "2.0.2"
 }

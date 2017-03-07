@@ -1,19 +1,16 @@
-/// <reference path="./api.d.ts" />
 import {Subject} from 'rxjs'
 
-const debug = require('debug')('balance')
-const SerialPort = require("serialport")
+import {OhausBalanceOptions} from './ohaus-balance-options'
+import {SerialData} from './serial-data'
+import {SerialError} from './serial-error'
+import {SerialList} from './serial-list'
+import {ISerialPortMetadata} from './serialport-metadata'
+import {ISerialPortOptions} from './serial-port-options'
+import {ISerialPortResponse, SerialPortResponse} from './serial-port-response'
+import {SerialStatus} from './serial-status'
 
-// SerialPort.list returns an array of data with this format.
-interface SerialPortMetadata {
-    comName: string,
-    manufacturer: string,
-    serialNumber: string,
-    pnpId: string,
-    locationId: string,
-    vendorId: string,
-    productId: string
-}
+const debug = require('debug')('balance')
+const SerialPort = require('serialport')
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -26,7 +23,7 @@ const DEBOUNCE_DELAY = 800 // mS
 export class SerialPortPublisher {
     private ftdiRegex: RegExp
     private port: any
-    private portOptions: any
+    private portOptions: ISerialPortOptions
     public publisher: Subject<any>
 
     // Used to pre-process data events before sending them to the WebSocket client.
@@ -37,13 +34,7 @@ export class SerialPortPublisher {
         this.port = null
 
         // These are common defaults for an Ohaus balance
-        this.portOptions = {
-            baudRate: 9600,
-            dataBits: 8,
-            stopBits: 1,
-            parity: 'none',
-            parser: SerialPort.parsers.readline('\n')
-        }
+        this.portOptions = new OhausBalanceOptions()
 
         // This is a hot stream.
         this.publisher = new Subject()
@@ -76,7 +67,7 @@ export class SerialPortPublisher {
     }
 
     public list = () => {
-        SerialPort.list((error: any, data: Array<SerialPortMetadata>) => {
+        SerialPort.list((error: any, data: Array<ISerialPortMetadata>) => {
                 if (error) {
                     debug('Received error from SerialPort.list: ', error)
                     this.sendError(error, 'Received error from SerialPort.list: ')
@@ -89,9 +80,7 @@ export class SerialPortPublisher {
                 let result = data.map(port => this.listToResponse(port))
                 debug('Transformed serial  port data: ', result)
 
-                this.publisher.next({
-                    list: result
-                } as SerialList)
+                this.publisher.next(new SerialList(result))
             }
         )
     }
@@ -116,23 +105,15 @@ export class SerialPortPublisher {
 
     public sendData = (data: string) => {
         debug('sendData: ', data)
-        this.publisher.next({
-            data: data
-        } as SerialData)
+        this.publisher.next(new SerialData(data))
     }
 
     public sendError = (error: any, message?: string) => {
-        this.publisher.next({
-            error: !error ? null : error.toString(),
-            message: message || null
-        } as SerialError)
+        this.publisher.next(new SerialError(error, message))
     }
 
     public sendStatus = () => {
-        this.publisher.next({
-            connected: this.isOpen,
-            device: this.device
-        } as SerialStatus)
+        this.publisher.next(new SerialStatus(this.isOpen, this.device))
     }
 
     ////////////////////////////////////////
@@ -176,20 +157,18 @@ export class SerialPortPublisher {
         return this.ftdiRegex instanceof RegExp && this.ftdiRegex.test(vendorId)
     }
 
-    private listToResponse = (port: SerialPortMetadata): SerialPortResponse => {
+    private listToResponse = (port: ISerialPortMetadata): ISerialPortResponse => {
         if (!port.vendorId && port.pnpId) {
             const pnpRegex = /VID_0403/
             if (pnpRegex.test(port.pnpId))
                 port.vendorId = '0x0403'
         }
+        
+        return new SerialPortResponse(
+            port, 
+            this.isDeviceConnected(port.comName),
+            this.isDevicePreferred(port.vendorId)
+        )
 
-        return {
-            device: port.comName,
-            vendor: port.manufacturer || null,
-            vendorId: port.vendorId || null,
-            productId: port.productId || null,
-            connected: this.isDeviceConnected(port.comName),
-            prefer: this.isDevicePreferred(port.vendorId)
-        }
     }
 }

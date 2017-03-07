@@ -17,6 +17,6 @@
         "js"
     ],
     "files": [
-        "src/app.ts"
+        "src/index.ts"
     ]
 }
