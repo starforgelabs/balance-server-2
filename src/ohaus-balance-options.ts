@@ -1,4 +1,4 @@
-import {ISerialPortOptions} from './serial-port-options'
+import {ISerialPortOptions} from './serial/serial-port-options'
 
 const SerialPort = require('serialport')
 

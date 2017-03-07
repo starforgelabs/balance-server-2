@@ -8,7 +8,7 @@ export class SerialError implements ISerialError {
     public error: string
     public message:string
 
-    constructor(error: string, message:string) {
+    constructor(error: string, message:string = null) {
         this.error = !error ? null : error.toString()
         this.message = message || null
     }
