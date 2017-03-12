@@ -1,13 +1,13 @@
-import {Subject} from 'rxjs'
+import { Subject } from 'rxjs'
 
-import {OhausBalanceOptions} from './ohaus-balance-options'
-import {SerialData} from './serial/serial-data'
-import {SerialError} from './serial/serial-error'
-import {SerialList} from './serial/serial-list'
-import {ISerialPortMetadata} from './serial/serialport-metadata'
-import {ISerialPortOptions} from './serial/serial-port-options'
-import {ISerialPortResponse, SerialPortResponse} from './serial/serial-port-response'
-import {SerialStatus} from './serial/serial-status'
+import { OhausBalanceOptions } from './ohaus-balance-options'
+import { ISerialData, SerialData } from './serial/serial-data'
+import { ISerialError, SerialError } from './serial/serial-error'
+import { SerialList } from './serial/serial-list'
+import { ISerialPortMetadata } from './serial/serialport-metadata'
+import { ISerialPortOptions } from './serial/serial-port-options'
+import { ISerialPortResponse, SerialPortResponse } from './serial/serial-port-response'
+import { ISerialStatus, SerialStatus } from './serial/serial-status'
 
 const debug = require('debug')('app:balance')
 const SerialPort = require('serialport')
@@ -68,20 +68,20 @@ export class SerialPortPublisher {
 
     public list = () => {
         SerialPort.list((error: any, data: Array<ISerialPortMetadata>) => {
-                if (error) {
-                    debug('Received error from SerialPort.list: ', error)
-                    this.sendError(error, 'Received error from SerialPort.list: ')
-                    return
-                }
-
-                debug('Received data from SerialPort.list: ', data)
-                if (!data) data = []
-
-                let result = data.map(port => this.listToResponse(port))
-                debug('Transformed serial  port data: ', result)
-
-                this.publisher.next(new SerialList(result))
+            if (error) {
+                debug('Received error from SerialPort.list: ', error)
+                this.sendError(error, 'Received error from SerialPort.list: ')
+                return
             }
+
+            debug('Received data from SerialPort.list: ', data)
+            if (!data) data = []
+
+            let result = data.map(port => this.listToResponse(port))
+            debug('Transformed serial  port data: ', result)
+
+            this.publisher.next(new SerialList(result))
+        }
         )
     }
 
@@ -103,17 +103,21 @@ export class SerialPortPublisher {
         this.port.on('open', this.portOpenHandler)
     }
 
-    public sendData = (data: string) => {
-        debug('sendData: ', data)
-        this.publisher.next(new SerialData(data))
+    private send = (packet: any): void => {
+        this.publisher.next(packet)
+        debug('Sending packet: ', packet)
     }
 
-    public sendError = (error: any, message?: string) => {
-        this.publisher.next(new SerialError(error, message))
+    public sendData = (data: string): void => {
+        this.send(new SerialData(data))
     }
 
-    public sendStatus = () => {
-        this.publisher.next(new SerialStatus(this.isOpen, this.device))
+    public sendError = (error: any, message?: string): void => {
+        this.send(new SerialError(error, message))
+    }
+
+    public sendStatus = (): void => {
+        this.send(new SerialStatus(this.isOpen, this.device))
     }
 
     ////////////////////////////////////////
@@ -163,9 +167,9 @@ export class SerialPortPublisher {
             if (pnpRegex.test(port.pnpId))
                 port.vendorId = '0x0403'
         }
-        
+
         return new SerialPortResponse(
-            port, 
+            port,
             this.isDeviceConnected(port.comName),
             this.isDevicePreferred(port.vendorId)
         )

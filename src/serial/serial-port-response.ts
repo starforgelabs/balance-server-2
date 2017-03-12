@@ -15,7 +15,7 @@ export class SerialPortResponse implements ISerialPortResponse {
     public productId: string // Product name
     public connected: boolean // This is `true` if the server is currently connected to this device.
     public prefer: boolean // This is `true` if this is an FTDI serial port, which suggests it may be an Ohaus balance.
-    
+
     constructor(port: any, connected: boolean, prefer: boolean) {
         this.device = port.comName
         this.vendor = port.manufacturer || null
