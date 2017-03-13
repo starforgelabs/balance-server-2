@@ -30,7 +30,7 @@ export class SerialPortPublisher {
     private dataStream: Subject<any>
 
     constructor() {
-        this.ftdiRegex = /0x0403/ // FTDI manufacturer ID
+        this.ftdiRegex = /0403/ // FTDI manufacturer ID
         this.port = null
 
         // These are common defaults for an Ohaus balance
@@ -42,14 +42,16 @@ export class SerialPortPublisher {
     }
 
     public close = () => {
-        if (this.isOpen)
+        if (this.isOpen) {
+            this.send(new SerialStatus(false, this.device))
             this.port.close()
+        }
 
         this.port = null
     }
 
     public get device(): string {
-        return this.port && this.port.path
+        return this.port && this.port.path || ""
     }
 
     private initializeDataDebouncer = () => {
@@ -81,8 +83,7 @@ export class SerialPortPublisher {
             debug('Transformed serial  port data: ', result)
 
             this.publisher.next(new SerialList(result))
-        }
-        )
+        })
     }
 
     public open = (device) => {
@@ -128,7 +129,8 @@ export class SerialPortPublisher {
 
     private portCloseHandler = () => {
         debug('Serial port close event.')
-        this.sendStatus()
+        if(this.device !== "")
+            this.sendStatus()
     }
 
     private portDataHandler = (data: string) => {
