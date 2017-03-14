@@ -92,6 +92,11 @@ export class SerialPortPublisher {
             return
         }
 
+        if (this.isOpen && this.device == device) {
+            this.sendStatus()
+            return
+        }
+
         debug('Doing a close() to be sure things are OK.')
         this.close()
 
@@ -129,7 +134,7 @@ export class SerialPortPublisher {
 
     private portCloseHandler = () => {
         debug('Serial port close event.')
-        if(this.device !== "")
+        if (this.device !== "")
             this.sendStatus()
     }
 
