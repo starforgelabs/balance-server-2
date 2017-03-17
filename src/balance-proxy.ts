@@ -2,6 +2,7 @@ import { SerialError } from './serial/serial-error'
 import { SerialPortPublisher } from './serial-port-publisher'
 
 const debug = require('debug')('app:proxy')
+const uuid = require('uuid/v4')
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -16,10 +17,13 @@ const debug = require('debug')('app:proxy')
 
 export class BalanceProxy {
     private subscription: any
+    private uuid: string
+    private sequence: number = 0
 
     constructor(private connection: any, private serial: SerialPortPublisher) {
         this.subscription = null
         this.subscribe()
+        this.uuid = uuid()
     }
 
     ////////////////////////////////////////
@@ -30,6 +34,10 @@ export class BalanceProxy {
 
 
     private balanceNext = (data) => {
+        this.sequence++
+        data.sequence = this.sequence
+        data.connectionId = this.uuid
+        debug('balanceNext: ', data, this.uuid)
         this.send(data)
     }
 
