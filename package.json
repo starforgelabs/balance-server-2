@@ -23,8 +23,8 @@
     "private": true,
     "repository": "https://github.com/starforgelabs/balance-server-2.git",
     "scripts": {
-      "install": "tsc",
-      "start": "node dist/index.js"
+        "install": "tsc",
+        "start": "rimraf dist && tsc && node dist/index.js"
     },
     "typings": "dist/index",
     "version": "2.1.0"

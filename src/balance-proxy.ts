@@ -1,5 +1,6 @@
 import { SerialError } from './serial/serial-error'
 import { SerialPortPublisher } from './serial-port-publisher'
+import { IPacket } from "./serial/packet"
 
 const debug = require('debug')('app:proxy')
 const uuid = require('uuid/v4')
@@ -33,7 +34,7 @@ export class BalanceProxy {
     ////////////////////////////////////////
 
 
-    private balanceNext = (data) => {
+    private balanceNext = (data: IPacket) => {
         this.sequence++
         data.sequence = this.sequence
         data.connectionId = this.uuid
@@ -62,11 +63,11 @@ export class BalanceProxy {
         debug('WebSocket connection closed.')
     }
 
-    public errorWebSocketHandler = (error) => {
+    public errorWebSocketHandler = (error: any) => {
         debug('WebSocket connection error: ', error)
     }
 
-    public messageWebSocketHandler = (message) => {
+    public messageWebSocketHandler = (message: string) => {
         let receivedJson: any
         try {
             receivedJson = JSON.parse(message)

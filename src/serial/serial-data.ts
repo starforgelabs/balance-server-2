@@ -1,12 +1,22 @@
-import { IPacketType, PacketType } from './packet-type'
+import { IPacket } from "./packet"
+import { PacketType } from './packet-type'
 
-// The client expects raw measurements from the balance to look like this.
+////////////////////////////////////////////////////////////////////////////////
+//
+// Raw instrument data is sent to the client in this format.
+//
+////////////////////////////////////////////////////////////////////////////////
+
 export interface ISerialData {
     data: string  // Raw instrument data
 }
 
-export class SerialData implements ISerialData, IPacketType {
+export class SerialData implements ISerialData, IPacket {
     public packetType: PacketType = PacketType.Data
+
+    public sequence: number
+    public connectionId: string
+
     constructor(public data: string) {
     }
 }

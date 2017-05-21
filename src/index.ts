@@ -11,7 +11,7 @@ const WS = require('ws')
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-nconf.argv().env().defaults({ 'port': 3333 })
+nconf.argv().env().defaults({'port': 3333})
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -31,9 +31,9 @@ const serialPortSingleton = new SerialPortPublisher()
 
 let port = nconf.get('port')
 debug(`Listening on port ${port}.`)
-const server = new WS.Server({ port: port })
+const server = new WS.Server({port: port})
 
-server.on('connection', (connection) => {
+server.on('connection', (connection: any) => {
     const balanceServer = new BalanceProxy(connection, serialPortSingleton)
     debug('Connection received.')
 
@@ -41,12 +41,13 @@ server.on('connection', (connection) => {
 
     connection.on('close', () => balanceServer.closeWebSocketHandler())
 
-    connection.on('error', (error) => balanceServer.errorWebSocketHandler(error))
+    connection.on('error', (error: any) => balanceServer.errorWebSocketHandler(error))
 
-    connection.on('message', (message) => {
+    connection.on('message', (message: string) => {
         debug('Message' + message)
         balanceServer.messageWebSocketHandler(message)
     })
 })
 
-server.on('error', (error) => debug('Error event: ', error))
+server.on('error', (error: any) => debug('Error event: ', error))
+

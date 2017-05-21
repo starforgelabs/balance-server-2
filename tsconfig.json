@@ -3,11 +3,13 @@
     "compilerOptions": {
         "declaration": true,
         "module": "commonjs",
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "outDir": "dist",
         "sourceMap": true,
         "target": "es6",
-        "types": ["node"]
+        "types": [
+            "node"
+        ]
     },
     "exclude": [
         "node_modules",

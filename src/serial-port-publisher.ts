@@ -6,7 +6,10 @@ import { ISerialError, SerialError } from './serial/serial-error'
 import { SerialList } from './serial/serial-list'
 import { ISerialPortMetadata } from './serial/serialport-metadata'
 import { ISerialPortOptions } from './serial/serial-port-options'
-import { ISerialPortResponse, SerialPortResponse } from './serial/serial-port-response'
+import {
+    ISerialPortResponse,
+    SerialPortResponse
+} from './serial/serial-port-response'
 import { ISerialStatus, SerialStatus } from './serial/serial-status'
 
 const debug = require('debug')('app:balance')
@@ -86,7 +89,7 @@ export class SerialPortPublisher {
         })
     }
 
-    public open = (device) => {
+    public open = (device: string) => {
         if (!device) {
             this.sendError(null, `open() didn't receive a device.`)
             return
@@ -144,7 +147,7 @@ export class SerialPortPublisher {
         this.dataStream.next(data)
     }
 
-    private portErrorHandler = (error) => {
+    private portErrorHandler = (error: any) => {
         debug('Serial port error: ', error)
         this.sendError(error, 'Serial port error.')
     }
