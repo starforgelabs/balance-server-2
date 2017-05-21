@@ -1,14 +1,14 @@
-import {ISerialPortOptions} from './serial/serial-port-options'
+import { ISerialPortOptions } from './serial/serial-port-options'
 
 const SerialPort = require('serialport')
 
-export class OhausBalanceOptions implements ISerialPortOptions {
+export class DefaultOhausBalanceOptions implements ISerialPortOptions {
     public baudRate: number
     public dataBits: number
     public stopBits: number
     public parity: string
     public parser: any
-    
+
     constructor() {
         // These are common defaults for an Ohaus balance
         this.baudRate = 9600

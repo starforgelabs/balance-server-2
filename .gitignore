@@ -1,5 +1,6 @@
 .idea/
 dist/
+src/**/*.js
 node_modules/
 *.log
 *.tgz

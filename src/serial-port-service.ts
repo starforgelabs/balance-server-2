@@ -1,16 +1,15 @@
 import { Subject } from 'rxjs'
 
-import { OhausBalanceOptions } from './ohaus-balance-options'
-import { ISerialData, SerialData } from './serial/serial-data'
-import { ISerialError, SerialError } from './serial/serial-error'
-import { SerialList } from './serial/serial-list'
+import { DefaultOhausBalanceOptions } from "./default-ohaus-balance-options"
+import { SerialData } from './serial/serial-data'
+import { SerialError } from './serial/serial-error'
 import { ISerialPortMetadata } from './serial/serialport-metadata'
 import { ISerialPortOptions } from './serial/serial-port-options'
-import {
-    ISerialPortResponse,
-    SerialPortResponse
-} from './serial/serial-port-response'
-import { ISerialStatus, SerialStatus } from './serial/serial-status'
+import { ISerialPortResponse } from './serial/serial-port-response'
+import { SerialStatus } from './serial/serial-status'
+import { SerialList } from './serial/serial-list'
+import { SerialPortResponse } from './serial/serial-port-response'
+import { IPacket } from "./serial/packet"
 
 const debug = require('debug')('app:balance')
 const SerialPort = require('serialport')
@@ -18,33 +17,39 @@ const SerialPort = require('serialport')
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Wrapper for the SerialPort object, pushing messages out through RxJS.
+// This is intended to be a singleton to control conflicts of multiple
+// clients fighting over the serial port.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const DEBOUNCE_DELAY = 800 // mS
+export interface ISerialPortService {
+    device: string
+    isOpen: boolean
+    observable: Subject<IPacket>
+    close(): void
+    list(): void
+    open(device: string): void
+    status(): void
+}
 
-export class SerialPortPublisher {
+export class SerialPortService implements ISerialPortService {
     private ftdiRegex: RegExp
     private port: any
     private portOptions: ISerialPortOptions
-    public publisher: Subject<any>
-
-    // Used to pre-process data events before sending them to the WebSocket client.
-    private dataStream: Subject<any>
+    public observable: Subject<IPacket>
 
     constructor() {
         this.ftdiRegex = /0403/ // FTDI manufacturer ID
         this.port = null
 
         // These are common defaults for an Ohaus balance
-        this.portOptions = new OhausBalanceOptions()
+        this.portOptions = new DefaultOhausBalanceOptions()
 
         // This is a hot stream.
-        this.publisher = new Subject()
-        this.initializeDataDebouncer()
+        this.observable = new Subject<IPacket>()
     }
 
-    public close = () => {
+    public close = (): void => {
         if (this.isOpen) {
             this.send(new SerialStatus(false, this.device))
             this.port.close()
@@ -57,25 +62,18 @@ export class SerialPortPublisher {
         return this.port && this.port.path || ""
     }
 
-    private initializeDataDebouncer = () => {
-        // This is a hot stream.
-        this.dataStream = new Subject()
-
-        // This debounces the data stream.
-        this.dataStream.debounceTime(DEBOUNCE_DELAY)
-            .subscribe(this.sendData)
-    }
-
     public get isOpen(): boolean {
         // Use !! to force a boolean result.
         return !!(this.port && this.port.isOpen())
     }
 
-    public list = () => {
+    public list = (): void => {
         SerialPort.list((error: any, data: Array<ISerialPortMetadata>) => {
             if (error) {
                 debug('Received error from SerialPort.list: ', error)
-                this.sendError(error, 'Received error from SerialPort.list: ')
+                this.send(new SerialError(
+                    error, 'Received error from SerialPort.list: '
+                ))
                 return
             }
 
@@ -85,13 +83,13 @@ export class SerialPortPublisher {
             let result = data.map(port => this.listToResponse(port))
             debug('Transformed serial  port data: ', result)
 
-            this.publisher.next(new SerialList(result))
+            this.observable.next(new SerialList(result))
         })
     }
 
-    public open = (device: string) => {
+    public open = (device: string): void => {
         if (!device) {
-            this.sendError(null, `open() didn't receive a device.`)
+            this.send(new SerialError(null, `open() didn't receive a device.`))
             return
         }
 
@@ -112,22 +110,7 @@ export class SerialPortPublisher {
         this.port.on('open', this.portOpenHandler)
     }
 
-    private send = (packet: any): void => {
-        this.publisher.next(packet)
-        debug('Sending packet: ', packet)
-    }
-
-    public sendData = (data: string): void => {
-        this.send(new SerialData(data))
-    }
-
-    public sendError = (error: any, message?: string): void => {
-        this.send(new SerialError(error, message))
-    }
-
-    public sendStatus = (): void => {
-        this.send(new SerialStatus(this.isOpen, this.device))
-    }
+    public status = (): void => this.sendStatus()
 
     ////////////////////////////////////////
     //
@@ -135,24 +118,23 @@ export class SerialPortPublisher {
     //
     ////////////////////////////////////////
 
-    private portCloseHandler = () => {
+    private portCloseHandler = (): void => {
         debug('Serial port close event.')
         if (this.device !== "")
             this.sendStatus()
     }
 
-    private portDataHandler = (data: string) => {
+    private portDataHandler = (data: string): void => {
         debug('Serial port data event:', data)
-        // Inject the data into the debouncer
-        this.dataStream.next(data)
+        this.observable.next(new SerialData(data))
     }
 
-    private portErrorHandler = (error: any) => {
+    private portErrorHandler = (error: any): void => {
         debug('Serial port error: ', error)
-        this.sendError(error, 'Serial port error.')
+        this.send(new SerialError(error, 'Serial port error.'))
     }
 
-    private portOpenHandler = () => {
+    private portOpenHandler = (): void => {
         debug('Serial port open event.')
         this.sendStatus()
     }
@@ -184,5 +166,14 @@ export class SerialPortPublisher {
             this.isDevicePreferred(port.vendorId)
         )
 
+    }
+
+    private send = (packet: IPacket): void => {
+        this.observable.next(packet)
+        debug('Sending packet: ', packet)
+    }
+
+    private sendStatus = (): void => {
+        this.send(new SerialStatus(this.isOpen, this.device))
     }
 }
