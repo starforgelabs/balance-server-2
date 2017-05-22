@@ -1,5 +1,8 @@
 import { BalanceProxy } from './balance-proxy'
-import { ISerialPortService, SerialPortService } from "./serial-port-service"
+import {
+    ISerialPortService,
+    SerialPortService
+} from "./serial/serial-port-service"
 
 const debug = require('debug')('app:main')
 const nconf = require('nconf')

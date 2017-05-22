@@ -132,7 +132,7 @@ The format of the JSON data can be found in the file `api.d.ts`.
 
 ### List Detected Serial Devices
 
-This will return a `SerialList`, which is an array of 
+This will return a `SerialListPacket`, which is an array of
 `SerialPortResponse` objects. The important fields are:
 
 *   `connected` - A boolean that indicates whether the server is 

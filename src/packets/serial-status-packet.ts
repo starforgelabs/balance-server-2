@@ -7,7 +7,7 @@ import { PacketType } from './packet-type'
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ISerialStatus {
+export interface ISerialStatusPacket {
     // This is `true` if the server is connected to a serial port.
     connected: boolean,
     // This is null if not connected.
@@ -15,7 +15,7 @@ export interface ISerialStatus {
     device: string
 }
 
-export class SerialStatus implements ISerialStatus, IPacket {
+export class SerialStatusPacket implements ISerialStatusPacket, IPacket {
     public packetType: PacketType = PacketType.Status
 
     public sequence: number

@@ -7,12 +7,12 @@ import { PacketType } from './packet-type'
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ISerialError {
+export interface IErrorPacket {
     error: string
     message: string
 }
 
-export class SerialError implements ISerialError, IPacket {
+export class ErrorPacket implements IErrorPacket, IPacket {
     public packetType: PacketType = PacketType.Error
     public error: string
     public message: string

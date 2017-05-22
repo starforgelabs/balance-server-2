@@ -7,11 +7,11 @@ import { PacketType } from './packet-type'
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ISerialData {
+export interface ISerialDataPacket {
     data: string  // Raw instrument data
 }
 
-export class SerialData implements ISerialData, IPacket {
+export class SerialDataPacket implements ISerialDataPacket, IPacket {
     public packetType: PacketType = PacketType.Data
 
     public sequence: number
