@@ -28,7 +28,7 @@
     "start": "rimraf dist && tsc && node dist/index.js"
   },
   "typings": "dist/index",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "devDependencies": {
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
