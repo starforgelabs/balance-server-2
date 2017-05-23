@@ -1,36 +1,70 @@
+import { ErrorPacket } from "../error-packet"
 import { IPacket } from "../packet"
-import { IDiscordWebhookLogger } from "../../discord/discord-webhook-logger"
 import { PacketType } from "../packet-type"
 import { SerialDataPacket } from "../serial-data-packet"
-import { ErrorPacket } from "../error-packet"
-import { ISlackAttachment } from "../../discord/discord-webhook-logger"
+import { SerialListPacket } from "../serial-list-packet"
 import { SerialStatusPacket } from "../serial-status-packet"
-import { ISerialListPacket, SerialListPacket } from "../serial-list-packet"
+
+import {
+    IDiscordWebhookLogger,
+    ISlackAttachment,
+    DiscordWebhookLogger
+} from "../../discord/discord-webhook-logger"
+import { MiscellaneousPacket } from "../miscellaneous-packet"
 
 const debug = require('debug')('Packet Logger')
 
 export interface IPacketLogger {
-    name: string
+    isConfigured: boolean
+    configure(name: string, webhookId: string, webhookToken: string): boolean
     log(packet: IPacket): void
 }
-
 
 export class PacketLogger implements IPacketLogger {
     public name: string
 
-    constructor(private webhook: IDiscordWebhookLogger) {
-        this.name = 'R&D'
+    private _isConfigured: boolean = false
+    private webhook: IDiscordWebhookLogger = null
+
+    constructor() {
+    }
+
+    public get isConfigured(): boolean {
+        return this._isConfigured
+    }
+
+    public configure = (name: string, webhookId: string, webhookToken: string): boolean => {
+        // Shut down old.
+        this._isConfigured = false
+        this.webhook = null
+
+        if (!name || !webhookId || !webhookToken) {
+            debug(`Can't configure Discord.`)
+            return false
+        }
+
+        this.name = name
+        this.webhook = new DiscordWebhookLogger(webhookId, webhookToken)
+        this._isConfigured = true
+
+        debug('Configured Discord for ', name)
     }
 
     public log = (data: IPacket): void => {
+        if (!this.isConfigured) {
+            debug('Tried to log packet but not configured. ', data)
+            return
+        }
+
         if (!data) {
             this.webhook.plainText('Tried to transmit an empty packet.')
             return
         }
 
         let type = PacketType[data.packetType]
-        let value: string
-        if (data.packetType == PacketType.Data)
+        if (data.packetType == PacketType.Miscellaneous)
+            this.logMiscellaneousPacket(data)
+        else if (data.packetType == PacketType.Data)
             this.logDataPacket(data)
         else if (data.packetType == PacketType.Error)
             this.logErrorPacket(data)
@@ -39,10 +73,16 @@ export class PacketLogger implements IPacketLogger {
         else if (data.packetType == PacketType.Status)
             this.logStatusPacket(data)
         else {
-            let message = `${type}: ${value}`
-            debug('Sending raw text to the webhook: ', message)
-            this.webhook.plainText(`${this.name}: ${message}`)
+            debug('Sending raw text to the webhook: ', data)
+            this.webhook.plainText(`${this.name}: ${type}`)
         }
+    }
+
+    private getFooter = (data: IPacket): string => {
+        if (!data.connectionId)
+            return ''
+        else
+            return `${data.connectionId} #${data.sequence}`
     }
 
     private logDataPacket = (data: IPacket): void => {
@@ -57,7 +97,7 @@ export class PacketLogger implements IPacketLogger {
             footer: this.getFooter(data)
         }]
 
-        debug('Sending data packet to the webhook: ', attachments, this.name)
+        debug('Sending data packet to the webhook: ', value, attachments, this.name)
         this.webhook.rawSlack(attachments, this.name)
     }
 
@@ -104,6 +144,22 @@ export class PacketLogger implements IPacketLogger {
         this.webhook.rawSlack(attachments, this.name, 'List')
     }
 
+    private logMiscellaneousPacket = (data: IPacket): void => {
+        let value: string = (<MiscellaneousPacket>data).message
+
+        let attachments: ISlackAttachment[] = [{
+            color: '#ff0',
+            fields: [{
+                title: 'Miscellaneous',
+                value: `\`${value}\``
+            }],
+            footer: this.getFooter(data)
+        }]
+
+        debug('Sending data packet to the webhook: ', value, attachments, this.name)
+        this.webhook.rawSlack(attachments, this.name)
+    }
+
     private logStatusPacket = (data: IPacket): void => {
         let connected: boolean = (<SerialStatusPacket>data).connected
         let device: string = (<SerialStatusPacket>data).device
@@ -122,9 +178,5 @@ export class PacketLogger implements IPacketLogger {
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
         this.webhook.rawSlack(attachments, this.name)
-    }
-
-    private getFooter = (data:IPacket):string => {
-        return `${data.connectionId} #${data.sequence}`
     }
 }
