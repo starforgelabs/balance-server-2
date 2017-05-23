@@ -25,10 +25,11 @@
   "repository": "https://github.com/starforgelabs/balance-server-2.git",
   "scripts": {
     "install": "tsc",
+    "make": "rimraf dist && tsc",
     "start": "rimraf dist && tsc && node dist/index.js"
   },
   "typings": "dist/index",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "devDependencies": {
     "tslint": "^5.2.0",
     "typescript": "^2.3.2"
