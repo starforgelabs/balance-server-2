@@ -1,17 +1,18 @@
 import { Subject } from 'rxjs'
 
 import { DefaultOhausBalanceOptions } from "./default-ohaus-balance-options"
-import { SerialData } from './serial/serial-data'
-import { SerialError } from './serial/serial-error'
-import { ISerialPortMetadata } from './serial/serialport-metadata'
-import { ISerialPortOptions } from './serial/serial-port-options'
-import { ISerialPortResponse } from './serial/serial-port-response'
-import { SerialStatus } from './serial/serial-status'
-import { SerialList } from './serial/serial-list'
-import { SerialPortResponse } from './serial/serial-port-response'
-import { IPacket } from "./serial/packet"
+import { ISerialPortMetadata } from './serialport-metadata'
+import { ISerialPortOptions } from './serial-port-options'
+import { ISerialPortResponse } from './serial-port-response'
+import { SerialPortResponse } from './serial-port-response'
 
-const debug = require('debug')('app:balance')
+import { ErrorPacket } from '../packets/error-packet'
+import { IPacket } from "../packets/packet"
+import { SerialDataPacket } from '../packets/serial-data-packet'
+import { SerialListPacket } from '../packets/serial-list-packet'
+import { SerialStatusPacket } from '../packets/serial-status-packet'
+
+const debug = require('debug')('Serial Port Service')
 const SerialPort = require('serialport')
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +52,7 @@ export class SerialPortService implements ISerialPortService {
 
     public close = (): void => {
         if (this.isOpen) {
-            this.send(new SerialStatus(false, this.device))
+            this.send(new SerialStatusPacket(false, this.device))
             this.port.close()
         }
 
@@ -71,7 +72,7 @@ export class SerialPortService implements ISerialPortService {
         SerialPort.list((error: any, data: Array<ISerialPortMetadata>) => {
             if (error) {
                 debug('Received error from SerialPort.list: ', error)
-                this.send(new SerialError(
+                this.send(new ErrorPacket(
                     error, 'Received error from SerialPort.list: '
                 ))
                 return
@@ -83,13 +84,13 @@ export class SerialPortService implements ISerialPortService {
             let result = data.map(port => this.listToResponse(port))
             debug('Transformed serial  port data: ', result)
 
-            this.observable.next(new SerialList(result))
+            this.send(new SerialListPacket(result))
         })
     }
 
     public open = (device: string): void => {
         if (!device) {
-            this.send(new SerialError(null, `open() didn't receive a device.`))
+            this.send(new ErrorPacket(null, `open() didn't receive a device.`))
             return
         }
 
@@ -126,12 +127,12 @@ export class SerialPortService implements ISerialPortService {
 
     private portDataHandler = (data: string): void => {
         debug('Serial port data event:', data)
-        this.observable.next(new SerialData(data))
+        this.send(new SerialDataPacket(data))
     }
 
     private portErrorHandler = (error: any): void => {
         debug('Serial port error: ', error)
-        this.send(new SerialError(error, 'Serial port error.'))
+        this.send(new ErrorPacket(error, 'Serial port error.'))
     }
 
     private portOpenHandler = (): void => {
@@ -174,6 +175,6 @@ export class SerialPortService implements ISerialPortService {
     }
 
     private sendStatus = (): void => {
-        this.send(new SerialStatus(this.isOpen, this.device))
+        this.send(new SerialStatusPacket(this.isOpen, this.device))
     }
 }

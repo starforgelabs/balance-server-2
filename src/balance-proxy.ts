@@ -1,8 +1,11 @@
-import { SerialError } from './serial/serial-error'
-import { IPacket } from "./serial/packet"
-import { ISerialPortService } from "./serial-port-service"
+import { ISerialPortService } from "./serial/serial-port-service"
 
-const debug = require('debug')('app:proxy')
+import { ErrorPacket } from './packets/error-packet'
+import { IPacket } from "./packets/packet"
+
+import packetLoggerService from './packets/logging/packet-logger-service'
+
+const debug = require('debug')('Balance Proxy')
 const uuid = require('uuid/v4')
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +79,7 @@ export class BalanceProxy {
             this.serialService.status()
 
         else
-            this.send(new SerialError(
+            this.send(new ErrorPacket(
                 `BalanceProxy doesn't recognize the command "${command.command}".`
             ))
     }
@@ -92,6 +95,7 @@ export class BalanceProxy {
     private handlePacket = (data: IPacket): void => {
         data.sequence = ++this.sequence
         data.connectionId = this.uuid
+        packetLoggerService.log(data)
         debug('Packet from service: ', data)
         this.send(data)
     }

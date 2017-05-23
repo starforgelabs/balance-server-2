@@ -11,6 +11,7 @@
 export enum PacketType {
     // Client side
     WebSocketConnection = 1,
+    Miscellaneous = 2,
 
         // Serial Port
     Data = 11,

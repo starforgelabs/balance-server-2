@@ -1,5 +1,5 @@
 import { IPacket } from "./packet"
-import { ISerialPortResponse } from './serial-port-response'
+import { ISerialPortResponse } from '../serial/serial-port-response'
 import { PacketType } from './packet-type'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -8,11 +8,11 @@ import { PacketType } from './packet-type'
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ISerialList {
+export interface ISerialListPacket {
     list: Array<ISerialPortResponse>
 }
 
-export class SerialList implements ISerialList, IPacket {
+export class SerialListPacket implements ISerialListPacket, IPacket {
     public packetType: PacketType = PacketType.List
 
     public sequence: number
