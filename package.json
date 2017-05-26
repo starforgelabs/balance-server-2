@@ -29,7 +29,7 @@
     "start": "rimraf dist && tsc && node dist/index.js"
   },
   "typings": "dist/index",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "devDependencies": {
     "typescript": "^2.3.2"
   }
