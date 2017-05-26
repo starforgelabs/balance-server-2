@@ -39,7 +39,7 @@ export class BalanceProxy implements IBalanceProxy {
     constructor(private connection: any,
                 private serialService: ISerialPortService) {
         this.subscribe()
-        this.uuid = uuid()
+        this.uuid = null
     }
 
     public handleWebSocketClose = (): void => {
@@ -64,6 +64,9 @@ export class BalanceProxy implements IBalanceProxy {
             debug(`JSON from WebSocket isn't a command packet.`, packet)
             return
         }
+
+        if (!this.uuid)
+            this.uuid = packet.connectionId
 
         let command: string = packet.command
         if (this.matches(command, [CommandList]))
