@@ -54,6 +54,9 @@ export class SerialPortService implements ISerialPortService {
         if (this.isOpen) {
             this.send(new SerialStatusPacket(false, this.device))
             this.port.close()
+        } else {
+            if (this.port)
+                this.port.close()
         }
 
         this.port = null
