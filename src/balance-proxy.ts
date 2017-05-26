@@ -1,9 +1,15 @@
-import { ISerialPortService } from "./serial/serial-port-service"
-
+import { CommandPacket } from "./packets/command-packet"
 import { ErrorPacket } from './packets/error-packet'
 import { IPacket } from "./packets/packet"
+import { ISerialPortService } from "./serial/serial-port-service"
+import { PacketType } from "./packets/packet-type"
 
 import packetLoggerService from './packets/logging/packet-logger-service'
+import {
+    CommandClose,
+    CommandConnect, CommandDisconnect, CommandList,
+    CommandOpen, CommandStatus
+} from "./packets/commands"
 
 const debug = require('debug')('Balance Proxy')
 const uuid = require('uuid/v4')
@@ -25,14 +31,7 @@ export interface IBalanceProxy {
     handleWebSocketMessage(message: string): void // handle messages coming in from the client
 }
 
-const CommandClose = 'close'
-const CommandConnect = 'connect'
-const CommandDisconnect = 'disconnect'
-const CommandList = 'list'
-const CommandOpen = 'open'
-const CommandStatus = 'status'
-
-export class BalanceProxy {
+export class BalanceProxy implements IBalanceProxy {
     private subscription: any = null
     private uuid: string
     private sequence: number = 0
@@ -53,24 +52,25 @@ export class BalanceProxy {
     }
 
     public handleWebSocketMessage = (message: string): void => {
-        let command: any
+        let packet: CommandPacket
         try {
-            command = JSON.parse(message)
+            packet = JSON.parse(message)
         } catch (e) {
             debug('Failed to parse JSON from WebSocket: ', e.message)
             return
         }
 
-        if (!command.command) {
-            debug('JSON from WebSocket does not have the required `command` attribute.')
+        if (packet.packetType !== PacketType.Command) {
+            debug(`JSON from WebSocket isn't a command packet.`, packet)
             return
         }
 
+        let command: string = packet.command
         if (this.matches(command, [CommandList]))
             this.serialService.list()
 
         else if (this.matches(command, [CommandConnect, CommandOpen]))
-            this.serialService.open(command.device)
+            this.serialService.open(packet.device)
 
         else if (this.matches(command, [CommandDisconnect, CommandClose]))
             this.serialService.close()
@@ -78,15 +78,19 @@ export class BalanceProxy {
         else if (this.matches(command, [CommandStatus]))
             this.serialService.status()
 
-        else
-            this.send(new ErrorPacket(
-                `BalanceProxy doesn't recognize the command "${command.command}".`
-            ))
+        else {
+            let error = new ErrorPacket(`BalanceProxy doesn't recognize the command "${command}".`)
+            error.sequence = ++this.sequence
+            error.connectionId = packet.connectionId
+
+            packetLoggerService.log(error)
+            this.send(error)
+        }
     }
 
-    private matches = (json: any, commands: string[]): boolean => {
+    private matches = (command: string, commands: string[]): boolean => {
         for (let c of commands) {
-            if (c === json.command) return true
+            if (c === command) return true
         }
 
         return false

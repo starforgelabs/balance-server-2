@@ -12,8 +12,9 @@ export enum PacketType {
     // Client side
     WebSocketConnection = 1,
     Miscellaneous = 2,
+    Command = 3,
 
-        // Serial Port
+    // Serial Port
     Data = 11,
     Error = 12,
     List = 13,
