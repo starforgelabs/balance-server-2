@@ -30,9 +30,9 @@ export class SerialPortResponse implements ISerialPortResponse {
 
     constructor(port: ISerialPortMetadata, connected: boolean, prefer: boolean) {
         this.device = port.comName
-        this.vendor = port.manufacturer || null
-        this.vendorId = port.vendorId || null
-        this.productId = port.productId || null
+        this.vendor = port.manufacturer || ''
+        this.vendorId = port.vendorId || ''
+        this.productId = port.productId || ''
         this.connected = connected
         this.prefer = prefer
     }

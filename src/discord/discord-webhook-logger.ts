@@ -32,7 +32,7 @@ export class DiscordWebhookLogger implements IDiscordWebhookLogger {
             .catch(this.catchHandler)
     }
 
-    public rawSlack = (attachments: ISlackAttachment[], username: string = null, text: string = null): void => {
+    public rawSlack = (attachments: ISlackAttachment[], username: string = '', text: string = ''): void => {
         let slackMessage: any = {
             username: username || this.webhook.name,
             text: text || '[]()',

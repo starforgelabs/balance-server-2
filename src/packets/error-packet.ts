@@ -20,8 +20,8 @@ export class ErrorPacket implements IErrorPacket, IPacket {
     public sequence: number
     public connectionId: string
 
-    constructor(error: string, message: string = null) {
-        this.error = !error ? null : error.toString()
-        this.message = message || null
+    constructor(error: string, message: string = '') {
+        this.error = !error ? '' : error.toString()
+        this.message = message || ''
     }
 }

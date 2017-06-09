@@ -93,7 +93,7 @@ export class SerialPortService implements ISerialPortService {
 
     public open = (device: string): void => {
         if (!device) {
-            this.send(new ErrorPacket(null, `open() didn't receive a device.`))
+            this.send(new ErrorPacket('', `open() didn't receive a device.`))
             return
         }
 

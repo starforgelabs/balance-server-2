@@ -24,7 +24,7 @@ export class PacketLogger implements IPacketLogger {
     public name: string
 
     private _isConfigured: boolean = false
-    private webhook: IDiscordWebhookLogger = null
+    private webhook: IDiscordWebhookLogger | null = null
 
     constructor() {
     }
@@ -48,6 +48,7 @@ export class PacketLogger implements IPacketLogger {
         this._isConfigured = true
 
         debug('Configured Discord for ', name)
+        return true
     }
 
     public log = (data: IPacket): void => {
@@ -57,7 +58,8 @@ export class PacketLogger implements IPacketLogger {
         }
 
         if (!data) {
-            this.webhook.plainText('Tried to transmit an empty packet.')
+            if (this.webhook)
+                this.webhook.plainText('Tried to transmit an empty packet.')
             return
         }
 
@@ -74,7 +76,8 @@ export class PacketLogger implements IPacketLogger {
             this.logStatusPacket(data)
         else {
             debug('Sending raw text to the webhook: ', data)
-            this.webhook.plainText(`${this.name}: ${type}`)
+            if (this.webhook)
+                this.webhook.plainText(`${this.name}: ${type}`)
         }
     }
 
@@ -98,7 +101,8 @@ export class PacketLogger implements IPacketLogger {
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
-        this.webhook.rawSlack(attachments, this.name)
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name)
     }
 
     private logErrorPacket = (data: IPacket): void => {
@@ -115,7 +119,8 @@ export class PacketLogger implements IPacketLogger {
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
-        this.webhook.rawSlack(attachments, this.name)
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name)
     }
 
     private logListPacket = (data: IPacket): void => {
@@ -141,7 +146,8 @@ export class PacketLogger implements IPacketLogger {
         }
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
-        this.webhook.rawSlack(attachments, this.name, 'List')
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name, 'List')
     }
 
     private logMiscellaneousPacket = (data: IPacket): void => {
@@ -157,7 +163,8 @@ export class PacketLogger implements IPacketLogger {
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
-        this.webhook.rawSlack(attachments, this.name)
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name)
     }
 
     private logStatusPacket = (data: IPacket): void => {
@@ -177,6 +184,7 @@ export class PacketLogger implements IPacketLogger {
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
-        this.webhook.rawSlack(attachments, this.name)
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name)
     }
 }

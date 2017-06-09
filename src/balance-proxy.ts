@@ -39,7 +39,6 @@ export class BalanceProxy implements IBalanceProxy {
     constructor(private connection: any,
                 private serialService: ISerialPortService) {
         this.subscribe()
-        this.uuid = null
     }
 
     public handleWebSocketClose = (): void => {

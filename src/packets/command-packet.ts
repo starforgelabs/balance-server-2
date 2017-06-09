@@ -18,7 +18,7 @@ export class CommandPacket implements ICommandPacket, IPacket {
     public sequence: number
     public connectionId: string
 
-    constructor(public command: string, public device: string = null) {
+    constructor(public command: string, public device: string = '') {
     }
 }
 
