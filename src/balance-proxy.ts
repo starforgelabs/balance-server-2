@@ -2,13 +2,15 @@ import { CommandPacket } from "./packets/command-packet"
 import { ErrorPacket } from './packets/error-packet'
 import { IPacket } from "./packets/packet"
 import { ISerialPortService } from "./serial/serial-port-service"
+import { MiscellaneousPacket } from "./packets/miscellaneous-packet"
 import { PacketType } from "./packets/packet-type"
+import { SerialDataPacket } from "./packets/serial-data-packet"
 
 import packetLoggerService from './packets/logging/packet-logger-service'
 import {
     CommandClose,
     CommandConnect, CommandDisconnect, CommandList,
-    CommandOpen, CommandStatus
+    CommandOpen, CommandSimulateData, CommandStatus
 } from "./packets/commands"
 
 const debug = require('debug')('Balance Proxy')
@@ -72,10 +74,15 @@ export class BalanceProxy implements IBalanceProxy {
             this.serialService.list()
 
         else if (this.matches(command, [CommandConnect, CommandOpen]))
-            this.serialService.open(packet.device)
+            this.serialService.open(packet.parameter)
 
         else if (this.matches(command, [CommandDisconnect, CommandClose]))
             this.serialService.close()
+
+        else if (this.matches(command, [CommandSimulateData])) {
+            this.send(new MiscellaneousPacket('Simulating data...'))
+            this.send(new SerialDataPacket(packet.parameter))
+        }
 
         else if (this.matches(command, [CommandStatus]))
             this.serialService.status()
