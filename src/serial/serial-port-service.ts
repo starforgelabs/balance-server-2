@@ -8,6 +8,7 @@ import { SerialPortResponse } from './serial-port-response'
 
 import { ErrorPacket } from '../packets/error-packet'
 import { IPacket } from "../packets/packet"
+import { MiscellaneousPacket } from "../packets/miscellaneous-packet"
 import { SerialDataPacket } from '../packets/serial-data-packet'
 import { SerialListPacket } from '../packets/serial-list-packet'
 import { SerialStatusPacket } from '../packets/serial-status-packet'
@@ -30,6 +31,7 @@ export interface ISerialPortService {
     close(): void
     list(): void
     open(device: string): void
+    simulate(data: string): void
     status(): void
 }
 
@@ -112,6 +114,13 @@ export class SerialPortService implements ISerialPortService {
         this.port.on('disconnect', this.close)
         this.port.on('error', this.portErrorHandler)
         this.port.on('open', this.portOpenHandler)
+    }
+
+    public simulate = (data: string): void => {
+        // Inject these packets into the services'
+        debug('Injecting simulated data into the stream: ', data)
+        this.send(new MiscellaneousPacket('Simulating data...'))
+        this.send(new SerialDataPacket(data))
     }
 
     public status = (): void => this.sendStatus()
