@@ -74,13 +74,13 @@ export class BalanceProxy implements IBalanceProxy {
             this.serialService.list()
 
         else if (this.matches(command, [CommandConnect, CommandOpen]))
-            this.serialService.open(packet.parameter)
+            this.serialService.open(packet.device)
 
         else if (this.matches(command, [CommandDisconnect, CommandClose]))
             this.serialService.close()
 
         else if (this.matches(command, [CommandSimulateData]))
-            this.serialService.simulate(packet.parameter)
+            this.serialService.simulate(packet.data)
 
         else if (this.matches(command, [CommandStatus]))
             this.serialService.status()

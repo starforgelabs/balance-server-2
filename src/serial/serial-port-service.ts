@@ -30,8 +30,8 @@ export interface ISerialPortService {
     observable: Subject<IPacket>
     close(): void
     list(): void
-    open(device: string): void
-    simulate(data: string): void
+    open(device: string | undefined): void
+    simulate(data: string | undefined): void
     status(): void
 }
 
@@ -93,7 +93,7 @@ export class SerialPortService implements ISerialPortService {
         })
     }
 
-    public open = (device: string): void => {
+    public open = (device: string | undefined): void => {
         if (!device) {
             this.send(new ErrorPacket('', `open() didn't receive a device.`))
             return
@@ -116,11 +116,16 @@ export class SerialPortService implements ISerialPortService {
         this.port.on('open', this.portOpenHandler)
     }
 
-    public simulate = (data: string): void => {
-        // Inject these packets into the services'
-        debug('Injecting simulated data into the stream: ', data)
-        this.send(new MiscellaneousPacket('Simulating data...'))
-        this.send(new SerialDataPacket(data))
+    public simulate = (data: string | undefined): void => {
+        if (typeof data == 'undefined') {
+            this.send(new ErrorPacket(`Rejecting undefined simulated data.`))
+            debug(`simulate() didn't receive any data.`)
+        } else {
+            // Inject these packets into the services'
+            debug('Injecting simulated data into the stream: ', data)
+            this.send(new MiscellaneousPacket('Simulating data...'))
+            this.send(new SerialDataPacket(data))
+        }
     }
 
     public status = (): void => this.sendStatus()

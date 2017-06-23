@@ -10,6 +10,7 @@ import { PacketType } from './packet-type'
 export interface ICommandPacket {
     command: string
     device?: string
+    data?: string
 }
 
 export class CommandPacket implements ICommandPacket, IPacket {
@@ -18,7 +19,8 @@ export class CommandPacket implements ICommandPacket, IPacket {
     public sequence: number
     public connectionId: string
 
-    constructor(public command: string, public parameter: string = '') {
-    }
+    public command: string
+    public device: string | undefined
+    public data: string | undefined
 }
 
