@@ -124,7 +124,7 @@ export class SerialPortService implements ISerialPortService {
             // Inject these packets into the services'
             debug('Injecting simulated data into the stream: ', data)
             this.send(new MiscellaneousPacket('Simulating data...'))
-            this.send(new SerialDataPacket(data))
+            this.send(new SerialDataPacket(data + ' SIMULATED'))
         }
     }
 
