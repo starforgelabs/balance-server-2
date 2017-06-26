@@ -1,5 +1,7 @@
+import { CommandPacket } from "../command-packet"
 import { ErrorPacket } from "../error-packet"
 import { IPacket } from "../packet"
+import { MiscellaneousPacket } from "../miscellaneous-packet"
 import { PacketType } from "../packet-type"
 import { SerialDataPacket } from "../serial-data-packet"
 import { SerialListPacket } from "../serial-list-packet"
@@ -10,7 +12,6 @@ import {
     ISlackAttachment,
     DiscordWebhookLogger
 } from "../../discord/discord-webhook-logger"
-import { MiscellaneousPacket } from "../miscellaneous-packet"
 
 const debug = require('debug')('Packet Logger')
 
@@ -74,6 +75,8 @@ export class PacketLogger implements IPacketLogger {
             this.logListPacket(data)
         else if (data.packetType == PacketType.Status)
             this.logStatusPacket(data)
+        else if (data.packetType == PacketType.Command)
+            this.logCommandPacket(data)
         else {
             debug('Sending raw text to the webhook: ', data)
             if (this.webhook)
@@ -86,6 +89,27 @@ export class PacketLogger implements IPacketLogger {
             return ''
         else
             return `${data.connectionId} #${data.sequence}`
+    }
+
+    private logCommandPacket = (packet: IPacket): void => {
+        let command: string = (<CommandPacket>packet).command
+        let device: string | undefined = (<CommandPacket>packet).device
+        let data: string | undefined = (<CommandPacket>packet).data
+
+        let value: string = `${command} ${device || ''}${data || ''}`
+
+        let attachments: ISlackAttachment[] = [{
+            color: '#f80',
+            fields: [{
+                title: 'Command',
+                value: `\`${value}\``
+            }],
+            footer: this.getFooter(packet)
+        }]
+
+        debug('Sending command packet to the webhook: ', value, attachments, this.name)
+        if (this.webhook)
+            this.webhook.rawSlack(attachments, this.name)
     }
 
     private logDataPacket = (data: IPacket): void => {
