@@ -31,9 +31,11 @@ export interface IBalanceProxy {
     handleWebSocketMessage(message: string): void // handle messages coming in from the client
 }
 
+const NO_CONNECTION_UUID = 'No connection UUID set yet.'
+
 export class BalanceProxy implements IBalanceProxy {
     private subscription: any = null
-    private uuid: string
+    private uuid: string = NO_CONNECTION_UUID
     private sequence: number = 0
 
     constructor(private connection: any,
@@ -62,6 +64,8 @@ export class BalanceProxy implements IBalanceProxy {
             return
         }
 
+        this.uuid = packet.connectionId
+
         packetLoggerService.log(packet)
 
         if (packet.packetType !== PacketType.Command) {
@@ -71,9 +75,6 @@ export class BalanceProxy implements IBalanceProxy {
             )
             return
         }
-
-        if (!this.uuid)
-            this.uuid = packet.connectionId
 
         let command: string = packet.command
         if (this.matches(command, [CommandList]))
