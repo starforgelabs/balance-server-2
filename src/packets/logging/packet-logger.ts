@@ -52,43 +52,43 @@ export class PacketLogger implements IPacketLogger {
         return true
     }
 
-    public log = (data: IPacket): void => {
+    public log = (packet: IPacket): void => {
         if (!this.isConfigured) {
-            debug('Tried to log packet but not configured. ', data)
+            debug('Tried to log packet but not configured. ', packet)
             return
         }
 
-        if (!data) {
+        if (!packet) {
             if (this.webhook)
                 this.webhook.plainText('Tried to transmit an empty packet.')
             return
         }
 
-        let type = PacketType[data.packetType]
-        if (data.packetType == PacketType.Miscellaneous)
-            this.logMiscellaneousPacket(data)
-        else if (data.packetType == PacketType.Data)
-            this.logDataPacket(data)
-        else if (data.packetType == PacketType.Error)
-            this.logErrorPacket(data)
-        else if (data.packetType == PacketType.List)
-            this.logListPacket(data)
-        else if (data.packetType == PacketType.Status)
-            this.logStatusPacket(data)
-        else if (data.packetType == PacketType.Command)
-            this.logCommandPacket(data)
+        let type = PacketType[packet.packetType]
+        if (packet.packetType == PacketType.Miscellaneous)
+            this.logMiscellaneousPacket(packet)
+        else if (packet.packetType == PacketType.Data)
+            this.logDataPacket(packet)
+        else if (packet.packetType == PacketType.Error)
+            this.logErrorPacket(packet)
+        else if (packet.packetType == PacketType.List)
+            this.logListPacket(packet)
+        else if (packet.packetType == PacketType.Status)
+            this.logStatusPacket(packet)
+        else if (packet.packetType == PacketType.Command)
+            this.logCommandPacket(packet)
         else {
-            debug('Sending raw text to the webhook: ', data)
+            debug('Sending raw text to the webhook: ', packet)
             if (this.webhook)
                 this.webhook.plainText(`${this.name}: ${type}`)
         }
     }
 
-    private getFooter = (data: IPacket): string => {
-        if (!data.connectionId)
+    private getFooter = (packet: IPacket): string => {
+        if (!packet.connectionId)
             return ''
         else
-            return `${data.connectionId} #${data.sequence}`
+            return `${packet.connectionId} #${packet.sequence}`
     }
 
     private logCommandPacket = (packet: IPacket): void => {
@@ -112,8 +112,8 @@ export class PacketLogger implements IPacketLogger {
             this.webhook.rawSlack(attachments, this.name)
     }
 
-    private logDataPacket = (data: IPacket): void => {
-        let value: string = (<SerialDataPacket>data).data
+    private logDataPacket = (packet: IPacket): void => {
+        let value: string = (<SerialDataPacket>packet).data
 
         let attachments: ISlackAttachment[] = [{
             color: '#0f0',
@@ -121,7 +121,7 @@ export class PacketLogger implements IPacketLogger {
                 title: 'Data',
                 value: `\`${value}\``
             }],
-            footer: this.getFooter(data)
+            footer: this.getFooter(packet)
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
@@ -129,9 +129,9 @@ export class PacketLogger implements IPacketLogger {
             this.webhook.rawSlack(attachments, this.name)
     }
 
-    private logErrorPacket = (data: IPacket): void => {
-        let value: string = (<ErrorPacket>data).message
-        let error: string = (<ErrorPacket>data).error
+    private logErrorPacket = (packet: IPacket): void => {
+        let value: string = (<ErrorPacket>packet).message
+        let error: string = (<ErrorPacket>packet).error
 
         let attachments: ISlackAttachment[] = [{
             color: '#f00',
@@ -139,7 +139,7 @@ export class PacketLogger implements IPacketLogger {
                 title: 'Error',
                 value: `\`${value} - ${error}\``
             }],
-            footer: this.getFooter(data)
+            footer: this.getFooter(packet)
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
@@ -147,8 +147,8 @@ export class PacketLogger implements IPacketLogger {
             this.webhook.rawSlack(attachments, this.name)
     }
 
-    private logListPacket = (data: IPacket): void => {
-        let list = (<SerialListPacket>data).list
+    private logListPacket = (packet: IPacket): void => {
+        let list = (<SerialListPacket>packet).list
 
         let attachments: ISlackAttachment[] = []
         for (let l of list) {
@@ -163,7 +163,7 @@ export class PacketLogger implements IPacketLogger {
                     title: l.device,
                     value: `\`${state}${vendor}\``
                 }],
-                footer: this.getFooter(data)
+                footer: this.getFooter(packet)
             }
 
             attachments.push(attachment)
@@ -174,8 +174,8 @@ export class PacketLogger implements IPacketLogger {
             this.webhook.rawSlack(attachments, this.name, 'List')
     }
 
-    private logMiscellaneousPacket = (data: IPacket): void => {
-        let value: string = (<MiscellaneousPacket>data).message
+    private logMiscellaneousPacket = (packet: IPacket): void => {
+        let value: string = (<MiscellaneousPacket>packet).message
 
         let attachments: ISlackAttachment[] = [{
             color: '#ff0',
@@ -183,7 +183,7 @@ export class PacketLogger implements IPacketLogger {
                 title: 'Miscellaneous',
                 value: `\`${value}\``
             }],
-            footer: this.getFooter(data)
+            footer: this.getFooter(packet)
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
@@ -191,9 +191,9 @@ export class PacketLogger implements IPacketLogger {
             this.webhook.rawSlack(attachments, this.name)
     }
 
-    private logStatusPacket = (data: IPacket): void => {
-        let connected: boolean = (<SerialStatusPacket>data).connected
-        let device: string = (<SerialStatusPacket>data).device
+    private logStatusPacket = (packet: IPacket): void => {
+        let connected: boolean = (<SerialStatusPacket>packet).connected
+        let device: string = (<SerialStatusPacket>packet).device
 
         let color = connected ? '#0ff' : '#044'
         let state = connected ? `Connected: ${device}` : 'Disconnected'
@@ -204,7 +204,7 @@ export class PacketLogger implements IPacketLogger {
                 title: 'Status',
                 value: `\`${state}\``
             }],
-            footer: this.getFooter(data)
+            footer: this.getFooter(packet)
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)

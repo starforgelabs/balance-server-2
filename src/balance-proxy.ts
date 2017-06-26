@@ -106,12 +106,12 @@ export class BalanceProxy implements IBalanceProxy {
         return false
     }
 
-    private handlePacket = (data: IPacket): void => {
-        data.sequence = ++this.sequence
-        data.connectionId = this.uuid
-        packetLoggerService.log(data)
-        debug('Packet from service: ', data)
-        this.send(data)
+    private handlePacket = (packet: IPacket): void => {
+        packet.sequence = ++this.sequence
+        packet.connectionId = this.uuid
+        packetLoggerService.log(packet)
+        debug('Packet from service: ', packet)
+        this.send(packet)
     }
 
     private subscribe = (): void => {
