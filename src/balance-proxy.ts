@@ -2,9 +2,7 @@ import { CommandPacket } from "./packets/command-packet"
 import { ErrorPacket } from './packets/error-packet'
 import { IPacket } from "./packets/packet"
 import { ISerialPortService } from "./serial/serial-port-service"
-import { MiscellaneousPacket } from "./packets/miscellaneous-packet"
 import { PacketType } from "./packets/packet-type"
-import { SerialDataPacket } from "./packets/serial-data-packet"
 
 import packetLoggerService from './packets/logging/packet-logger-service'
 import {
@@ -63,6 +61,8 @@ export class BalanceProxy implements IBalanceProxy {
             )
             return
         }
+
+        packetLoggerService.log(packet)
 
         if (packet.packetType !== PacketType.Command) {
             debug(`JSON from WebSocket isn't a command packet.`, packet)
