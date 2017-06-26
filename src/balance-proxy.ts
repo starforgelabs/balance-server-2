@@ -58,11 +58,17 @@ export class BalanceProxy implements IBalanceProxy {
             packet = JSON.parse(message)
         } catch (e) {
             debug('Failed to parse JSON from WebSocket: ', e.message)
+            this.sendErrorPacket(
+                `Failed to parse JSON from WebSocket: ${e.message}`
+            )
             return
         }
 
         if (packet.packetType !== PacketType.Command) {
             debug(`JSON from WebSocket isn't a command packet.`, packet)
+            this.sendErrorPacket(
+                `JSON from WebSocket isn't a command packet. ${packet}`,
+            )
             return
         }
 
@@ -85,14 +91,10 @@ export class BalanceProxy implements IBalanceProxy {
         else if (this.matches(command, [CommandStatus]))
             this.serialService.status()
 
-        else {
-            let error = new ErrorPacket(`BalanceProxy doesn't recognize the command "${command}".`)
-            error.sequence = ++this.sequence
-            error.connectionId = packet.connectionId
-
-            packetLoggerService.log(error)
-            this.send(error)
-        }
+        else
+            this.sendErrorPacket(
+                `BalanceProxy doesn't recognize the command "${command}".`,
+            )
     }
 
     private matches = (command: string, commands: string[]): boolean => {
@@ -129,5 +131,14 @@ export class BalanceProxy implements IBalanceProxy {
         catch (e) {
             debug('Failed to send data to client: ', e.message)
         }
+    }
+
+    private sendErrorPacket = (message: string) => {
+        let error = new ErrorPacket(message)
+        error.sequence = ++this.sequence
+        error.connectionId = this.uuid
+
+        packetLoggerService.log(error)
+        this.send(error)
     }
 }
