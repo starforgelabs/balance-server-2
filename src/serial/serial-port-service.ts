@@ -143,6 +143,12 @@ export class SerialPortService implements ISerialPortService {
     }
 
     private portDataHandler = (data: string): void => {
+        if (/^\s*$/.test(data)) {
+            debug('Ignoring spurious blank line.')
+            this.send(new MiscellaneousPacket('**Data:** Ignoring spurious blank line.'))
+            return
+        }
+
         debug('Serial port data event:', data)
         this.send(new SerialDataPacket(data))
     }
