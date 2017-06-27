@@ -12,6 +12,10 @@ import { MiscellaneousPacket } from "../packets/miscellaneous-packet"
 import { SerialDataPacket } from '../packets/serial-data-packet'
 import { SerialListPacket } from '../packets/serial-list-packet'
 import { SerialStatusPacket } from '../packets/serial-status-packet'
+import {
+    ISerialPortInstance, SerialPortInstance,
+    SerialPortState
+} from "./serial-port-instance"
 
 const debug = require('debug')('Serial Port Service')
 const SerialPort = require('serialport')
@@ -37,7 +41,7 @@ export interface ISerialPortService {
 
 export class SerialPortService implements ISerialPortService {
     private ftdiRegex: RegExp
-    private port: any
+    private port: ISerialPortInstance | null
     private portOptions: ISerialPortOptions
     public observable: Subject<IPacket>
 
@@ -53,15 +57,8 @@ export class SerialPortService implements ISerialPortService {
     }
 
     public close = (): void => {
-        if (this.isOpen) {
-            this.send(new SerialStatusPacket(false, this.device))
+        if (this.port)
             this.port.close()
-        } else {
-            if (this.port)
-                this.port.close()
-        }
-
-        this.port = null
     }
 
     public get device(): string {
@@ -69,8 +66,7 @@ export class SerialPortService implements ISerialPortService {
     }
 
     public get isOpen(): boolean {
-        // Use !! to force a boolean result.
-        return !!(this.port && this.port.isOpen())
+        return this.port !== null && this.port.state === SerialPortState.open
     }
 
     public list = (): void => {
@@ -99,21 +95,16 @@ export class SerialPortService implements ISerialPortService {
             return
         }
 
-        if (this.isOpen && this.device == device) {
-            this.sendStatus()
-            return
+        if (!this.port) {
+            this.port = new SerialPortInstance(
+                this.portOptions,
+                this.portStateChange,
+                this.portData,
+                this.portError
+            )
         }
 
-        debug('Doing a close() to be sure things are OK.')
-        this.close()
-
-        debug('Opening serial port with options: ', this.portOptions)
-        this.port = new SerialPort(device, this.portOptions)
-        this.port.on('close', this.portCloseHandler)
-        this.port.on('data', this.portDataHandler)
-        this.port.on('disconnect', this.close)
-        this.port.on('error', this.portErrorHandler)
-        this.port.on('open', this.portOpenHandler)
+        this.port.open(device)
     }
 
     public simulate = (data: string | undefined): void => {
@@ -136,13 +127,11 @@ export class SerialPortService implements ISerialPortService {
     //
     ////////////////////////////////////////
 
-    private portCloseHandler = (): void => {
-        debug('Serial port close event.')
-        if (this.device !== "")
-            this.sendStatus()
+    private portStateChange = (): void => {
+        this.sendStatus()
     }
 
-    private portDataHandler = (data: string): void => {
+    private portData = (data: string): void => {
         if (/^\s*$/.test(data)) {
             debug('Ignoring spurious blank line.')
             this.send(new MiscellaneousPacket('**Data:** Ignoring spurious blank line.'))
@@ -153,14 +142,9 @@ export class SerialPortService implements ISerialPortService {
         this.send(new SerialDataPacket(data))
     }
 
-    private portErrorHandler = (error: any): void => {
-        debug('Serial port error: ', error)
-        this.send(new ErrorPacket(error, 'Serial port error.'))
-    }
-
-    private portOpenHandler = (): void => {
-        debug('Serial port open event.')
-        this.sendStatus()
+    private portError = (title: string, message: string): void => {
+        debug('Serial port error: ', title, message)
+        this.send(new ErrorPacket(message, title))
     }
 
     ////////////////////////////////////////
