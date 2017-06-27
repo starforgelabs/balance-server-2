@@ -8,9 +8,9 @@ import { SerialListPacket } from "../serial-list-packet"
 import { SerialStatusPacket } from "../serial-status-packet"
 
 import {
-    IDiscordWebhookLogger,
+    IDiscordWebhookLogger, DiscordWebhookLogger,
     ISlackAttachment,
-    DiscordWebhookLogger
+    ISlackField,
 } from "../../discord/discord-webhook-logger"
 
 const debug = require('debug')('Packet Logger')
@@ -98,13 +98,16 @@ export class PacketLogger implements IPacketLogger {
 
         let value: string = `${command} ${device || ''}${data || ''}`
 
+        let date = new Date()
         let attachments: ISlackAttachment[] = [{
             color: '#f80',
-            fields: [{
-                title: 'Command',
-                value: `\`${value}\``
-            }],
-            footer: this.getFooter(packet)
+            title: 'Command',
+            text: `\`${value}\``,
+            footer: this.getFooter(packet),
+            fields: [
+                {value: date.toLocaleDateString(), short: true},
+                {value: date.toLocaleTimeString(), short: true},
+            ],
         }]
 
         debug('Sending command packet to the webhook: ', value, attachments, this.name)
@@ -115,13 +118,16 @@ export class PacketLogger implements IPacketLogger {
     private logDataPacket = (packet: IPacket): void => {
         let value: string = (<SerialDataPacket>packet).data
 
+        let date = new Date()
         let attachments: ISlackAttachment[] = [{
             color: '#0f0',
-            fields: [{
-                title: 'Data',
-                value: `\`${value}\``
-            }],
-            footer: this.getFooter(packet)
+            title: 'Data',
+            text: `\`${value}\``,
+            footer: this.getFooter(packet),
+            fields: [
+                {value: date.toLocaleDateString(), short: true},
+                {value: date.toLocaleTimeString(), short: true},
+            ],
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
@@ -130,16 +136,19 @@ export class PacketLogger implements IPacketLogger {
     }
 
     private logErrorPacket = (packet: IPacket): void => {
-        let value: string = (<ErrorPacket>packet).message
+        let message: string = (<ErrorPacket>packet).message
         let error: string = (<ErrorPacket>packet).error
 
+        let date = new Date()
         let attachments: ISlackAttachment[] = [{
             color: '#f00',
-            fields: [{
-                title: 'Error',
-                value: `\`${value} - ${error}\``
-            }],
-            footer: this.getFooter(packet)
+            title: 'Error',
+            text: `${message}\n\`${error}\``,
+            footer: this.getFooter(packet),
+            fields: [
+                {value: date.toLocaleDateString(), short: true},
+                {value: date.toLocaleTimeString(), short: true},
+            ],
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
@@ -150,40 +159,50 @@ export class PacketLogger implements IPacketLogger {
     private logListPacket = (packet: IPacket): void => {
         let list = (<SerialListPacket>packet).list
 
-        let attachments: ISlackAttachment[] = []
+        let fields: ISlackField[] = []
         for (let l of list) {
             let vendor = `${l.vendor} ${l.vendorId || ''} ${l.productId || ''}`
 
-            let color = l.prefer ? '#f0f' : '#404'
-            let state = l.connected ? ' (Connected) ' : ''
+            let prefer = l.prefer ? '[Prefer] ' : ''
+            let state = l.connected ? '(Connected) ' : ''
 
-            let attachment: ISlackAttachment = {
-                color: color,
-                fields: [{
-                    title: l.device,
-                    value: `\`${state}${vendor}\``
-                }],
-                footer: this.getFooter(packet)
+            let field: ISlackField = {
+                title: l.device,
+                value: `${prefer}${state}\`${vendor}\``,
             }
 
-            attachments.push(attachment)
+            fields.push(field)
         }
+
+        let date = new Date()
+        fields.push({value: date.toLocaleDateString(), short: true})
+        fields.push({value: date.toLocaleTimeString(), short: true})
+
+        let attachments: ISlackAttachment[] = [{
+            color: '#f0f',
+            title: 'List',
+            footer: this.getFooter(packet),
+            fields: fields,
+        }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
         if (this.webhook)
-            this.webhook.rawSlack(attachments, this.name, 'List')
+            this.webhook.rawSlack(attachments, this.name)
     }
 
     private logMiscellaneousPacket = (packet: IPacket): void => {
         let value: string = (<MiscellaneousPacket>packet).message
 
+        let date = new Date()
         let attachments: ISlackAttachment[] = [{
             color: '#ff0',
-            fields: [{
-                title: 'Miscellaneous',
-                value: `\`${value}\``
-            }],
-            footer: this.getFooter(packet)
+            title: 'Miscellaneous',
+            text: value,
+            footer: this.getFooter(packet),
+            fields: [
+                {value: date.toLocaleDateString(), short: true},
+                {value: date.toLocaleTimeString(), short: true},
+            ],
         }]
 
         debug('Sending data packet to the webhook: ', value, attachments, this.name)
@@ -196,15 +215,18 @@ export class PacketLogger implements IPacketLogger {
         let device: string = (<SerialStatusPacket>packet).device
 
         let color = connected ? '#0ff' : '#044'
-        let state = connected ? `Connected: ${device}` : 'Disconnected'
+        let state = connected ? `Connected to \`${device}\`` : 'Disconnected'
 
+        let date = new Date()
         let attachments: ISlackAttachment[] = [{
             color: color,
-            fields: [{
-                title: 'Status',
-                value: `\`${state}\``
-            }],
-            footer: this.getFooter(packet)
+            title: 'Status',
+            text: state,
+            footer: this.getFooter(packet),
+            fields: [
+                {value: date.toLocaleDateString(), short: true},
+                {value: date.toLocaleTimeString(), short: true},
+            ],
         }]
 
         debug('Sending data packet to the webhook: ', attachments, this.name)
