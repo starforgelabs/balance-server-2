@@ -32,7 +32,6 @@ export class SerialPortInstance implements ISerialPortInstance {
         if (this.state !== SerialPortState.open) return
 
         this._state = SerialPortState.isClosing
-        // TODO: Implement timeout to catch failures?
         this.port.close()
     }
 
@@ -50,7 +49,6 @@ export class SerialPortInstance implements ISerialPortInstance {
         this.port.on('disconnect', this.portDisconnectHandler)
         this.port.on('error', this.portErrorHandler)
         this.port.on('open', this.portOpenHandler)
-        // TODO: Implement timeout to catch failures?
     }
 
     public get path(): string {
@@ -87,16 +85,16 @@ export class SerialPortInstance implements ISerialPortInstance {
         if (this.state === SerialPortState.isOpening) {
             this._state = SerialPortState.closed
             this.portError('Failed to open serial port.', error && error.message || '')
+            this.tearDownPort()
             this.portStateChange()
-            this.port = null
             return
         }
 
         if (this.state === SerialPortState.isClosing) {
             this._state = SerialPortState.closed
             this.portError('Failed to close serial port.', error && error.message || '')
+            this.tearDownPort()
             this.portStateChange()
-            this.port = null
             return
         }
 
@@ -107,6 +105,20 @@ export class SerialPortInstance implements ISerialPortInstance {
         debug('Serial port open event.')
         this._state = SerialPortState.open
         this.portStateChange()
+    }
+
+    private tearDownPort = (): void => {
+        if (!this.port) return
+
+        function nothing() {
+        }
+
+        this.port.on('close', nothing)
+        this.port.on('data', nothing)
+        this.port.on('disconnect', nothing)
+        this.port.on('error', nothing)
+        this.port.on('open', nothing)
+        this.port = null
     }
 }
 
