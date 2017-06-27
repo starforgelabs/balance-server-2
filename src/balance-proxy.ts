@@ -3,6 +3,7 @@ import { ErrorPacket } from './packets/error-packet'
 import { IPacket } from "./packets/packet"
 import { IPacketLogger } from "./packets/logging/packet-logger"
 import { ISerialPortService } from "./serial/serial-port-service"
+import { MiscellaneousPacket } from "./packets/miscellaneous-packet"
 import { PacketType } from "./packets/packet-type"
 
 import {
@@ -31,7 +32,7 @@ export interface IBalanceProxy {
     handleWebSocketMessage(message: string): void // handle messages coming in from the client
 }
 
-const NO_CONNECTION_UUID = 'No connection UUID set yet.'
+const NO_CONNECTION_UUID = ''
 
 export class BalanceProxy implements IBalanceProxy {
     private subscription: any = null
@@ -42,10 +43,20 @@ export class BalanceProxy implements IBalanceProxy {
                 private serialService: ISerialPortService,
                 private packetLoggerService: IPacketLogger) {
         this.subscribe()
+
+        this.packetLoggerService.log(new MiscellaneousPacket(
+            `A new connection has been opened with the server.`
+        ))
     }
 
     public handleWebSocketClose = (): void => {
         this.unsubscribe()
+
+        let packet = new MiscellaneousPacket(`WebSocket connection closed.`)
+        packet.sequence = this.sequence
+        packet.connectionId = this.uuid
+        this.packetLoggerService.log(packet)
+
         debug('WebSocket connection closed.')
     }
 
