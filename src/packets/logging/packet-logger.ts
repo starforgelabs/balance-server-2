@@ -161,15 +161,30 @@ export class PacketLogger implements IPacketLogger {
 
         let fields: ISlackField[] = []
         for (let l of list) {
-            let vendor = `${l.vendor} ${l.vendorId || ''} ${l.productId || ''}`
-
-            let prefer = l.prefer ? '[Prefer] ' : ''
-            let state = l.connected ? '(Connected) ' : ''
 
             let field: ISlackField = {
                 title: l.device,
-                value: `${prefer}${state}\`${vendor}\``,
+                value: '',
+                short: false,
             }
+
+            // There are several conditional values to add to "value".
+            if (l.prefer)
+                field.value += '[Prefer]'
+
+            if (l.connected)
+                field.value += ' **Connected**'
+
+            if (l.vendor)
+                field.value += ` ${l.vendor}`
+
+            if (l.vendorId)
+                field.value += ` \`${l.vendorId}\``
+
+            if (l.productId)
+                field.value += ` \`${l.productId}\``
+
+            field.value = field.value.trim()
 
             fields.push(field)
         }
