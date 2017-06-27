@@ -1,10 +1,10 @@
 import { CommandPacket } from "./packets/command-packet"
 import { ErrorPacket } from './packets/error-packet'
 import { IPacket } from "./packets/packet"
+import { IPacketLogger } from "./packets/logging/packet-logger"
 import { ISerialPortService } from "./serial/serial-port-service"
 import { PacketType } from "./packets/packet-type"
 
-import packetLoggerService from './packets/logging/packet-logger-service'
 import {
     CommandClose,
     CommandConnect, CommandDisconnect, CommandList,
@@ -39,7 +39,8 @@ export class BalanceProxy implements IBalanceProxy {
     private sequence: number = 0
 
     constructor(private connection: any,
-                private serialService: ISerialPortService) {
+                private serialService: ISerialPortService,
+                private packetLoggerService: IPacketLogger) {
         this.subscribe()
     }
 
@@ -66,7 +67,7 @@ export class BalanceProxy implements IBalanceProxy {
 
         this.uuid = packet.connectionId
 
-        packetLoggerService.log(packet)
+        this.packetLoggerService.log(packet)
 
         if (packet.packetType !== PacketType.Command) {
             debug(`JSON from WebSocket isn't a command packet.`, packet)
@@ -109,7 +110,7 @@ export class BalanceProxy implements IBalanceProxy {
     private handlePacket = (packet: IPacket): void => {
         packet.sequence = ++this.sequence
         packet.connectionId = this.uuid
-        packetLoggerService.log(packet)
+        this.packetLoggerService.log(packet)
         debug('Packet from service: ', packet)
         this.send(packet)
     }
@@ -139,7 +140,7 @@ export class BalanceProxy implements IBalanceProxy {
         error.sequence = ++this.sequence
         error.connectionId = this.uuid
 
-        packetLoggerService.log(error)
+        this.packetLoggerService.log(error)
         this.send(error)
     }
 }

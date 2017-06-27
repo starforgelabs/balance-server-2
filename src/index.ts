@@ -30,12 +30,14 @@ nconf.argv()
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-import packetLoggerService from './packets/logging/packet-logger-service'
 import { MiscellaneousPacket } from "./packets/miscellaneous-packet"
+import { IPacketLogger, PacketLogger } from "./packets/logging/packet-logger"
 let name = nconf.get('Name')
 let webhookId = nconf.get('WebhookId')
 let webhookToken = nconf.get('WebhookToken')
-packetLoggerService.configure(name, webhookId, webhookToken)
+
+let packetLoggerSingleton: IPacketLogger = new PacketLogger()
+packetLoggerSingleton.configure(name, webhookId, webhookToken)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -56,12 +58,17 @@ const serialPortSingleton: ISerialPortService = new SerialPortService()
 let port = nconf.get('port')
 const server = new ws.Server({port: port})
 debug(`Listening on port ${port}.`)
-packetLoggerService.log(new MiscellaneousPacket(`Server listening on port ${port}`))
+packetLoggerSingleton.log(new MiscellaneousPacket(`Server started. Listening on port ${port}`))
 
 server.on('connection', (connection: any) => {
     // This instance gets trapped
     // in the closures of the 'on' event handlers below.
-    const glue = new BalanceProxy(connection, serialPortSingleton)
+    const glue = new BalanceProxy(
+        connection,
+        serialPortSingleton,
+        packetLoggerSingleton
+    )
+
     debug('Connection received.')
 
     connection.on('close', () => glue.handleWebSocketClose())
