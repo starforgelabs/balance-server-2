@@ -197,3 +197,23 @@ ws.send(JSON.stringify(command))
 ```
 
 
+#### Simulate Balance Reading
+
+This will tell the server to simulate receiving data from the balance. 
+
+**Note**:
+The server will append ` SIMULATED` to the end of the received `data` attribute
+to be clear about the fact that this is not an actual balance reading.
+
+Example: 
+
+``` javascript
+let ws = new WebSocket("ws://localhost:3333")
+let command = { 
+    command: "simulate-data",
+    data: "1.23 G ? NET"
+}
+ws.send(JSON.stringify(command))
+```
+
+
