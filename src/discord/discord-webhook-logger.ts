@@ -1,18 +1,43 @@
 const debug = require('debug')('lib:discordlogger')
 const Discord = require('discord.js')
 
+// Slack fields taken from
+//
+// https://api.slack.com/docs/message-attachments
+//
+// on 6/26/17
+
 export interface ISlackField {
-    title?: string
-    value: string
+    title?: string // No markup permitted
+    value: string // Uses standard message markup
+    short?: boolean
 }
 
 export interface ISlackAttachment {
-    pretext?: string
+    fallback?: string  // Required plain-text summary of the attachment. No markup.
+
     color?: string
+
+    pretext?: string
+
+    author_name?: string
+    author_link?: string // URL, requires author_name
+    author_icon?: string // URL 16x16, requires author_name
+
+    title?: string
+    title_link?: string // URL, requires title
+
+    text?: string // Markdown supported.
+
+    image_url?: string // URL, max 400x500
+    thumb_url?: string // URL, 75x75
+
     fields?: ISlackField[]
-    footer_ioon?: string
+
+    footer_icon?: string // URL, 16x16
     footer?: string
-    ts?: number
+
+    ts?: number // Unix timestamp
 }
 
 export interface IDiscordWebhookLogger {
@@ -36,7 +61,8 @@ export class DiscordWebhookLogger implements IDiscordWebhookLogger {
         let slackMessage: any = {
             username: username || this.webhook.name,
             text: text || '[]()',
-            attachments: attachments
+            attachments: attachments,
+            ts: Math.floor(Date.now() / 1000),
         }
 
         this.webhook.sendSlackMessage(slackMessage)
